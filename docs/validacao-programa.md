@@ -3,7 +3,11 @@
 *Pesquisa feita em 15/07/2026, antes do início oficial do ciclo. Compara o
 programa do app (Barra A-D + aeróbico 2x + deload na semana 5) com
 meta-análises e revisões recentes sobre volume, frequência, periodização,
-autorregulação por RPE, deload, acessórios e treino concorrente.*
+autorregulação por RPE, deload, acessórios, treino concorrente e mobilidade.*
+
+*Atualizado no mesmo dia: os ajustes 1-3 e a mobilidade enxuta **já foram
+aplicados** ao `program.js` — o texto abaixo reflete o programa vigente, com
+os valores antigos indicados onde houve mudança.*
 
 ---
 
@@ -13,10 +17,12 @@ autorregulação por RPE, deload, acessórios e treino concorrente.*
 faixa eficiente para força, frequência de supino excelente, ondulação
 pesado/volume dentro da semana, progressão limitada por RPE (que a literatura
 favorece sobre percentuais fixos) e cardio de baixa intensidade em dias
-separados (interferência mínima). Os pontos discutíveis são poucos e de baixa
-prioridade: terra com estímulo direto 1x/semana, core só 1x/semana, e o deload
-fixo na semana 5 — que a evidência recente sugere ser mais "seguro" do que
-"necessário".
+separados (interferência mínima). As três lacunas de baixa prioridade que a
+pesquisa apontou — terra direto 1x/semana, core 1x/semana e ausência de
+unilateral de perna — **foram corrigidas no mesmo dia** (terra técnico na
+quinta, core no domingo, búlgaro no lugar do leg press). Fica em aberto apenas
+o experimento futuro do deload reativo — o fixo na semana 5 é defensável e a
+evidência o trata mais como "seguro" do que "necessário".
 
 ---
 
@@ -39,14 +45,14 @@ já produzem ganho de 1RM em powerlifters.
 
 | Padrão | Séries diretas | + Indiretas | Avaliação |
 |---|---|---|---|
-| Agacho | 8 (4x4@8 + 4x6@7) | leg press 3 | ✅ zona ótima para força; quadríceps ~11 p/ hipertrofia |
+| Agacho | 8 (4x4@8 + 4x6@7) | búlgaro 3 | ✅ zona ótima para força; quadríceps ~11 p/ hipertrofia |
 | Supino | 9 (4x6@7 + 5x3@8) | fechado 3 + inclinado 4 | ✅ pressing total ~16, ótimo |
-| Terra | 4 (4x3@8) | stiff 3 | ⚠️ acima do mínimo eficaz, mas é o básico com menos estímulo |
+| Terra | 6 (4x3@8 + 2x3@6 técnico) | stiff 3 | ✅ corrigido em 15/07 (era 4 séries, 1x/semana) |
 | Costas (remadas/puxadas) | 11 | — | ✅ excelente p/ powerlifting |
 | Posteriores | 6 (stiff + mesa flexora) | terra | ✅ adequado |
 | Ombros | 3 + band pull-apart | pressing | ✅ suficiente dado o volume de press |
 | Tríceps / Bíceps | 3 / 3 | pressing / remadas | ✅ acessório clássico |
-| Core | 3 (1x/semana) | básicos | ⚠️ funcional, mas é o menor volume do programa |
+| Core | 6 (2x/semana, dom+ter) | básicos | ✅ corrigido em 15/07 (era 3, 1x/semana) |
 
 ## 2. Frequência
 
@@ -61,8 +67,9 @@ sugere supino 3-4x, agacho 2-3x e terra 2x por semana. Na meta-regressão de
 prática: treinar o movimento mais vezes melhora a habilidade.
 
 **No programa**: agacho 2x ✅ · supino 2x direto + 4 dias de pressing ✅ ·
-terra 1x direto + stiff como padrão de dobradiça ⚠️ (é o único abaixo da
-sugestão observacional de 2x).
+terra **2x** desde 15/07 (pesado na terça + 2x3@6 técnico na quinta) ✅ —
+era o único básico abaixo da sugestão observacional, corrigido com prática
+leve do movimento, que é o que a frequência compra para força.
 
 ## 3. Periodização
 
@@ -124,9 +131,11 @@ para terra e agacho, e algum trabalho **unilateral** para simetria.
 
 **No programa**: costas com 11 séries em 3 padrões diferentes ✅ · tríceps ✅ ·
 stiff + mesa flexora ✅ · remada unilateral ✅ · band pull-apart diário para
-ombro ✅. O que não tem: unilateral de perna (o leg press da sexta poderia
-alternar com búlgaro/afundo) e core além da terça. Nenhum dos dois é falha
-grave — são as primeiras coisas a acrescentar se sobrar disposição na sexta.
+ombro ✅. As duas lacunas apontadas pela pesquisa foram fechadas em 15/07:
+**agachamento búlgaro** entrou no lugar do leg press na sexta (unilateral de
+perna, simetria, menos carga axial no dia sem PR — o leg press era o acessório
+mais redundante com agacho 2x/semana) e **core subiu para 2x/semana**
+(dom + ter). O leg press segue definido no `program.js` para eventual rodízio.
 
 ## 7. Treino concorrente (natação/corrida + força)
 
@@ -169,22 +178,36 @@ Mobilize* (mobilidade dinâmica do dia + band pull-apart) e *Potentiate*
 - **Especificidade por dia** (tornozelo/quadril → agacho; dobradiça/torácica →
   terra; rotação externa → supino): alinhada ao princípio do RAMP. ✅
 
+**Aplicado em 15/07**: as listas foram enxugadas para 1-2 itens específicos
+por dia — Barra A: agacho profundo c/ peso corporal 30-45s + tornozelo ·
+Barra B: dobradiça (ensaio) + cat-camel · Barra C: rotação externa · Barra D:
+só o band pull-apart. Como a rampa faz a maior parte da preparação específica,
+os itens cortados (quadril isolado, torácica, ativação de glúteo) viram
+ferramenta de exceção: voltam se aparecer limitação recorrente.
+
 ---
 
-## Ajustes sugeridos (opcionais, em ordem de custo-benefício)
+## Ajustes aplicados em 15/07/2026 (commits `defb70c` e `afde9c6`)
 
-1. **Terra 2x/semana**: acrescentar na quinta (Barra C) 2-3 séries leves e
-   técnicas de terra (~70% @RPE6, ou terra romeno pesado no lugar) — é o único
-   básico abaixo da frequência sugerida pela evidência observacional.
-2. **Core 2x/semana**: repetir os 3x de core no domingo ou na sexta (custo ~5
-   minutos).
-3. **Unilateral de perna**: na sexta, alternar leg press com agachamento
-   búlgaro a cada ciclo.
-4. **Deload reativo (futuro)**: com o detector de estagnação do app maduro,
-   experimentar ciclos de 5-6 semanas com deload disparado por sinal em vez de
-   fixo na 5ª — mantém o formato atual (60% carga, metade das séries).
+1. ✅ **Terra 2x/semana**: terra técnico 2x3 @RPE6 (~70% da terça) na Barra C.
+   A sugestão de carga do app passou a isolar o histórico **por dia do
+   programa**, então o técnico progride separado do pesado (idem agacho A/C).
+2. ✅ **Core 2x/semana**: 3x de core também na Barra A (domingo).
+3. ✅ **Unilateral de perna**: agachamento búlgaro 3x10/perna no lugar do leg
+   press na Barra D.
+4. ✅ **Mobilidade enxuta**: 1-2 itens específicos por dia (detalhe na seção 8).
+
+## Pendentes (hábitos e experimentos futuros)
+
 5. **Calibrar o RPE**: uma vez por ciclo (fora do deload), levar a última série
    de um acessório até perto da falha para recalibrar a percepção de RIR.
+6. **Deload reativo**: com 2-3 ciclos de dados no app, experimentar ciclos de
+   5-6 semanas com deload disparado pelo detector de estagnação em vez de fixo
+   na 5ª — mantendo o formato atual (60% carga, metade das séries).
+7. **Corrida sempre leve** (se usada no lugar da natação), com cuidado na
+   segunda, véspera do terra.
+8. **Se estagnar, cortar volume da sexta primeiro** — é o dia mais volumoso em
+   séries e o acessório é o primeiro volume a sair; Barras A-C não se tocam.
 
 ## O que **não** mudar
 
