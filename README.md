@@ -42,6 +42,26 @@ service worker baixa a versão nova em segundo plano e ela vale a partir da
 abertura seguinte. Só é preciso mexer em `CACHE_VERSION` (no `sw.js`) se você
 renomear/remover arquivos.
 
+## Programa da semana (atual)
+
+Ciclo de 4 semanas + deload na 5ª (~60% da carga, metade das séries, sem RPE
+alto). Ajustado em jul/2026 com base na literatura — pesquisa e fontes em
+[`docs/validacao-programa.md`](docs/validacao-programa.md).
+
+| Dia | Sessão | Prescrição |
+|---|---|---|
+| **Dom** | Barra A — Agacho pesado | Agacho 4x4 @8 (rampa) · Supino 4x6 @7 · Remada curvada 4x8 · Stiff 3x10 · Core 3x |
+| **Seg** | Aeróbico | Natação ou corrida, leve/moderado (distância + tempo) |
+| **Ter** | Barra B — Terra pesado | Terra 4x3 @8 (rampa) · Supino fechado 3x8 leve · Puxada 4x10 · Core 3x |
+| **Qua** | Aeróbico | Natação ou corrida, leve/moderado |
+| **Qui** | Barra C — Supino pesado | Supino 5x3 @8 (rampa) · Agacho 4x6 @7 volume · Terra 2x3 @6 técnico (~70% da terça) · Remada unilateral 3x10 |
+| **Sex** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 4x8 · Búlgaro 3x10/perna · Desenvolvimento 3x8 · Tríceps/Bíceps/Mesa flexora 3x12 |
+| **Sáb** | Off | Descanso |
+
+Todo dia de barra: mobilidade dinâmica específica + band pull-apart 2x15.
+Terra técnico e agacho volume progridem **separados** dos dias pesados (a
+sugestão de carga é por dia do programa).
+
 ## Editar o programa de treino
 
 Tudo em **`js/program.js`**: exercícios, dias, prescrições (séries × reps ×
