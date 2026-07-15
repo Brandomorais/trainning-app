@@ -198,6 +198,8 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
   color: #cdd3dd;
   line-height: 1.45;
 }
+.hint-warn { border: 1px solid var(--accent); }
+.hint-bad { border: 1px solid var(--danger); background: var(--danger-bg); color: #ffb4b4; }
 
 .done-sets { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
 .set-chip {
@@ -318,6 +320,24 @@ input[type="date"] {
 .btn-danger { background: var(--danger-bg); border-color: #5c2b2b; color: var(--danger); }
 
 /* ---------- Histórico ---------- */
+.trend {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
+.trend b { color: var(--text); }
+.trend-ok { border-color: rgba(76, 195, 138, 0.45); }
+.trend-ok b { color: var(--good); }
+.trend-atencao { border-color: var(--accent); }
+.trend-atencao b { color: var(--accent); }
+.trend-estagnado { border-color: var(--danger); background: var(--danger-bg); }
+.trend-estagnado b { color: var(--danger); }
+
 .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
 .stat {
   background: var(--card);

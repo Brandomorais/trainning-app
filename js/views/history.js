@@ -1,7 +1,7 @@
 /*
  * Histórico por exercício: gráfico de e1RM (Epley) por sessão + lista de séries.
  */
-import { EXERCISES } from '../program.js';
+import { EXERCISES, DAYS } from '../program.js';
 import { getLogs } from '../db.js';
 import {
   sessionsFor,
@@ -10,6 +10,8 @@ import {
   fmtKg,
   formatDateShort,
   formatDateLong,
+  analyzeTrend,
+  trendSignals,
 } from '../progression.js';
 import { renderLineChart } from '../components/chart.js';
 
@@ -48,6 +50,30 @@ export async function render(el) {
     .map((id) => `<option value="${id}"${id === selectedEx ? ' selected' : ''}>${EXERCISES[id].name}</option>`)
     .join('');
 
+  // Tendência por prescrição (só levantamentos principais): agacho pesado
+  // (Barra A) e agacho volume (Barra C) são analisados separadamente.
+  let trendHTML = '';
+  if (EXERCISES[selectedEx].type === 'main') {
+    trendHTML = Object.entries(DAYS)
+      .filter(([, day]) => day.kind === 'lift')
+      .flatMap(([dayKey, day]) => {
+        const slot = (day.slots ?? []).find((s) => s.exerciseId === selectedEx);
+        if (!slot || !logs.some((l) => l.exerciseId === selectedEx && l.dayKey === dayKey)) return [];
+        const t = analyzeTrend(slot, logs, dayKey);
+        if (t.insufficient) {
+          return [`<div class="trend"><b>${day.name}</b> — análise de tendência a partir de 3 sessões (tem ${t.sessions}).</div>`];
+        }
+        const head = { ok: '✓ Progredindo', atencao: '⚠ Atenção', estagnado: '⛔ Estagnado' }[t.status];
+        const why =
+          t.status === 'ok'
+            ? 'e1RM subindo na janela recente'
+            : trendSignals(t, slot).join(' e ');
+        const tail = t.status === 'estagnado' ? '. Considere deload antecipado (−10%)' : '';
+        return [`<div class="trend trend-${t.status}"><b>${head}</b> — ${day.name}: ${why}${tail}.</div>`];
+      })
+      .join('');
+  }
+
   const sessionList = [...sessions]
     .reverse()
     .map((s) => {
@@ -79,6 +105,7 @@ export async function render(el) {
       <div class="stat">Maior carga<b>${fmtKg(maxWeight)}</b></div>
       <div class="stat">Sessões<b>${sessions.length}</b></div>
     </div>
+    ${trendHTML}
     <section class="card chart-card">
       <h2>e1RM por sessão — ${EXERCISES[selectedEx].name}</h2>
       <p class="chart-sub">Epley: carga × (1 + reps/30) · melhor série do dia · ○ = deload</p>

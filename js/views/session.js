@@ -71,7 +71,9 @@ function slotCard(slot, ctx) {
     .sort((a, b) => a.createdAt - b.createdAt);
 
   const effSets = ctx.deload ? Math.max(1, Math.ceil(slot.sets / 2)) : slot.sets;
-  const adv = advise(slot, ctx.logs, ctx.date, ctx.deload);
+  const adv = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey);
+  const hintCls =
+    adv.status === 'estagnado' ? ' hint-bad' : adv.status === 'atencao' ? ' hint-warn' : '';
   const lastToday = todays[todays.length - 1];
   const prefWeight = lastToday ? lastToday.weight : adv.weight ?? '';
   const prefReps = slot.reps ?? 10;
@@ -99,7 +101,7 @@ function slotCard(slot, ctx) {
         <span class="prescription">${prescription}</span>
       </div>
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
-      <p class="hint">${adv.text}</p>
+      <p class="hint${hintCls}">${adv.text}</p>
       ${setChips(todays)}
       <label class="field-label">Carga (kg)</label>
       <div class="stepper">

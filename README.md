@@ -55,6 +55,13 @@ RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
 - **Vídeos**: exercícios e itens de mobilidade têm um `query` que vira link de
   busca no YouTube (o ▶ nas telas). Para fixar um vídeo favorito, adicione
   `url: 'https://youtu.be/…'` ao item — o link direto sempre ganha da busca.
+- **Estagnação**: para os `main`, o app analisa as últimas 3 sessões da mesma
+  prescrição (agacho pesado ≠ agacho volume) e cruza dois sinais: e1RM que não
+  sobe e RPE ≥ alvo + 1. Um sinal → aviso amarelo e sugestão de segurar a
+  carga; dois sinais (ou um persistindo 4 sessões) → aviso vermelho e deload
+  antecipado de 10%. Aparece no hint do exercício e como badge no histórico.
+  Sessões de deload ficam fora da análise, e nada disso trava o formulário —
+  a carga sugerida é sempre editável.
 
 ## Backup
 

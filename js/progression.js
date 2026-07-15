@@ -92,11 +92,66 @@ function sessionFailed(session, prescribedReps) {
   return repsAtTop < prescribedReps;
 }
 
+/* ---------- Detecção de estagnação ---------- */
+/*
+ * Analisa as últimas sessões NÃO-deload de um exercício restritas a um
+ * dia do programa (mesma prescrição: agacho pesado ≠ agacho volume).
+ * `dateISO` limita a janela a sessões anteriores à data (null = todas).
+ *
+ * Sinais:
+ *  - e1rmStalled: melhor e1RM da sessão não superou o de 3 sessões atrás
+ *  - rpeHigh: RPE médio nas séries da carga máxima ≥ alvo + 1 nas 2 últimas
+ *
+ * Status: 1 sinal → 'atencao'; 2 sinais, ou 1 sinal persistindo por
+ * 4 sessões → 'estagnado'. Menos de 3 sessões → 'ok' (sem alarme falso).
+ */
+export function analyzeTrend(slot, logs, dayKey, dateISO = null) {
+  const sessions = sessionsFor(logs, slot.exerciseId)
+    .filter((s) => !dateISO || s.date < dateISO)
+    .map((s) => ({ ...s, sets: dayKey ? s.sets.filter((x) => x.dayKey === dayKey) : s.sets }))
+    .filter((s) => s.sets.length && !s.sets.some((x) => x.isDeload));
+
+  const n = sessions.length;
+  if (n < 3) {
+    return { status: 'ok', sessions: n, e1rmStalled: false, rpeHigh: false, insufficient: true };
+  }
+
+  const e1rms = sessions.map((s) => bestE1RM(s.sets));
+  const stalled3 = e1rms[n - 1] <= e1rms[n - 3];
+  const stalled4 = n >= 4 && e1rms[n - 1] <= e1rms[n - 4];
+
+  const overTarget = (s) => {
+    if (!slot.rpe) return false;
+    const w = topWeight(s.sets);
+    const rpes = s.sets.filter((x) => x.weight === w && x.rpe != null).map((x) => x.rpe);
+    if (!rpes.length) return false;
+    return rpes.reduce((a, b) => a + b, 0) / rpes.length >= slot.rpe + 1;
+  };
+  const rpeHigh2 = overTarget(sessions[n - 1]) && overTarget(sessions[n - 2]);
+  const rpeHigh3 = rpeHigh2 && overTarget(sessions[n - 3]);
+
+  let status = 'ok';
+  if (stalled3 || rpeHigh2) status = 'atencao';
+  if ((stalled3 && rpeHigh2) || stalled4 || rpeHigh3) status = 'estagnado';
+
+  return { status, sessions: n, e1rmStalled: stalled3, rpeHigh: rpeHigh2, insufficient: false };
+}
+
+/** Descrição humana dos sinais de um trend (para hint e histórico). */
+export function trendSignals(trend, slot) {
+  const out = [];
+  if (trend.e1rmStalled) out.push('e1RM sem subir há 3+ sessões');
+  if (trend.rpeHigh) out.push(`RPE saindo acima do alvo ${slot.rpe} nas últimas sessões`);
+  return out;
+}
+
 /*
  * Sugestão para um slot do treino, olhando o histórico ANTES de `dateISO`.
- * Retorna { text, weight } — weight (ou null) pré-preenche o formulário.
+ * Retorna { text, weight, status } — weight (ou null) pré-preenche o
+ * formulário; status ('ok' | 'atencao' | 'estagnado') dirige o visual do hint.
+ * `dayKey` restringe a análise de tendência à mesma prescrição.
  */
-export function advise(slot, logs, dateISO, deload) {
+export function advise(slot, logs, dateISO, deload, dayKey = null) {
   const ex = EXERCISES[slot.exerciseId];
   const past = sessionsFor(logs, slot.exerciseId).filter((s) => s.date < dateISO);
 
@@ -133,8 +188,28 @@ export function advise(slot, logs, dateISO, deload) {
       return {
         text: `Falhou 2 semanas seguidas → deload 10%: volte para ~${fmtKg(w)} e reconstrua.`,
         weight: w,
+        status: 'estagnado',
       };
     }
+
+    const trend = analyzeTrend(slot, logs, dayKey, dateISO);
+    if (trend.status === 'estagnado') {
+      const w = round2p5(lastTop * FAIL_DELOAD_FACTOR);
+      return {
+        text: `Estagnação: ${trendSignals(trend, slot).join(' e ')}. Deload antecipado: volte para ~${fmtKg(w)} (−10%) e reconstrua.`,
+        weight: w,
+        status: 'estagnado',
+      };
+    }
+    if (trend.status === 'atencao') {
+      const [signal] = trendSignals(trend, slot);
+      return {
+        text: `${signal} — segure ${fmtKg(lastTop)} e busque um RPE mais limpo antes de subir.`,
+        weight: lastTop,
+        status: 'atencao',
+      };
+    }
+
     const w = lastTop + ex.increment;
     return {
       text:
