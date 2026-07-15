@@ -145,6 +145,30 @@ menor interferência possível ✅. Ao usar a opção **corrida** do app, vale a
 regra extra: ritmo confortável e cuidado com corrida forte na segunda, véspera
 do terra (o excêntrico repetido da corrida chega mais "caro" na posterior).
 
+## 8. Mobilidade e aquecimento
+
+O bloco de aquecimento do programa reproduz a estrutura
+[RAMP (Jeffreys)](https://www.researchgate.net/publication/316878902_RAMP_warm-ups_more_than_simply_short-term_preparation),
+o padrão da literatura de S&C: *Raise* (bike 5-8min dom/ter), *Activate &
+Mobilize* (mobilidade dinâmica do dia + band pull-apart) e *Potentiate*
+(rampa no 1º movimento). Achados relevantes:
+
+- **Estático curto não atrapalha**: [<60s por músculo antes do treino não
+  prejudica desempenho](https://pmc.ncbi.nlm.nih.gov/articles/PMC11026323/);
+  o que se evita é estático **longo** pré-treino — exatamente a nota do app.
+  Flexibilidade como objetivo funciona melhor em sessões separadas.
+- **Rampa tem evidência direta**: aquecimento específico progressivo
+  [melhora o desempenho das séries válidas](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7558980/)
+  e ramp-up progressivo associa-se a
+  [~25% menos strains de membro inferior](https://pmc.ncbi.nlm.nih.gov/articles/PMC13210987/).
+  Para cargas leves (~10RM), rampa específica é dispensável — o programa já
+  só a prescreve nos dias pesados. ✅
+- **Band pull-apart**: sem RCT próprio; entra como trabalho de rotadores
+  externos/escápula, prática padrão de saúde de ombro com 4 dias de pressing.
+  Custo mínimo, mantém.
+- **Especificidade por dia** (tornozelo/quadril → agacho; dobradiça/torácica →
+  terra; rotação externa → supino): alinhada ao princípio do RAMP. ✅
+
 ---
 
 ## Ajustes sugeridos (opcionais, em ordem de custo-benefício)
