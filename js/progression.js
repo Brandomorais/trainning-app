@@ -225,11 +225,14 @@ export function trendSignals(trend, slot) {
  * Sugestão para um slot do treino, olhando o histórico ANTES de `dateISO`.
  * Retorna { text, weight, status } — weight (ou null) pré-preenche o
  * formulário; status ('ok' | 'atencao' | 'estagnado') dirige o visual do hint.
- * `dayKey` restringe a análise de tendência à mesma prescrição.
+ * `dayKey` restringe histórico e tendência à mesma prescrição: terra pesado
+ * (Barra B) e terra técnico (Barra C) progridem separados, idem agacho A/C.
  */
 export function advise(slot, logs, dateISO, deload, dayKey = null) {
   const ex = EXERCISES[slot.exerciseId];
-  const past = sessionsFor(logs, slot.exerciseId).filter((s) => s.date < dateISO);
+  const past = sessionsFor(logs, slot.exerciseId)
+    .map((s) => (dayKey ? { ...s, sets: s.sets.filter((x) => x.dayKey === dayKey) } : s))
+    .filter((s) => s.sets.length && s.date < dateISO);
 
   if (ex.type === 'quality') {
     return { text: 'Progrida em reps e qualidade de execução, não em carga.', weight: null };

@@ -35,6 +35,7 @@ export const EXERCISES = {
   'remada-unilateral': { name: 'Remada unilateral', type: 'accessory', repRange: [10, 12], query: 'remada unilateral serrote técnica' },
   'supino-inclinado':  { name: 'Supino inclinado',  type: 'accessory', repRange: [8, 12],  query: 'supino inclinado técnica' },
   'leg-press':         { name: 'Leg press',         type: 'accessory', repRange: [10, 12], query: 'leg press técnica' },
+  'bulgaro':           { name: 'Agachamento búlgaro', type: 'accessory', repRange: [8, 12], query: 'agachamento búlgaro técnica' },
   'desenvolvimento':   { name: 'Desenvolvimento',   type: 'accessory', repRange: [8, 10],  query: 'desenvolvimento de ombros técnica' },
   'triceps':           { name: 'Tríceps',           type: 'accessory', repRange: [12, 15], query: 'tríceps na polia técnica' },
   'biceps':            { name: 'Bíceps',            type: 'accessory', repRange: [12, 15], query: 'rosca direta técnica' },
@@ -57,6 +58,7 @@ export const DAYS = {
       { exerciseId: 'supino', sets: 4, reps: 6, rpe: 7, rest: '2-3min' },
       { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min' },
       { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s' },
+      { exerciseId: 'core', sets: 3, reps: null, rest: '60s' },
     ],
   },
   'aerobico': {
@@ -91,6 +93,7 @@ export const DAYS = {
     slots: [
       { exerciseId: 'supino', sets: 5, reps: 3, rpe: 8, rest: '3-4min', ramp: true },
       { exerciseId: 'agacho', sets: 4, reps: 6, rpe: 7, rest: '2-3min', note: 'volume' },
+      { exerciseId: 'terra', sets: 2, reps: 3, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da terça' },
       { exerciseId: 'remada-unilateral', sets: 3, reps: 10, rest: '90s' },
     ],
   },
@@ -105,7 +108,7 @@ export const DAYS = {
     ],
     slots: [
       { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min' },
-      { exerciseId: 'leg-press', sets: 3, reps: 10, rest: '90s-2min' },
+      { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna' },
       { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s' },
       { exerciseId: 'triceps', sets: 3, reps: 12, rest: '60s' },
       { exerciseId: 'biceps', sets: 3, reps: 12, rest: '60s' },
