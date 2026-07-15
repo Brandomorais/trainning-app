@@ -33,6 +33,7 @@ async function navigate() {
   });
   view.onclick = null;
   view.onchange = null;
+  view.oninput = null;
   await render(view);
   window.scrollTo(0, 0);
 }

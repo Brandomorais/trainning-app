@@ -23,11 +23,17 @@ function niceTicks(min, max, target = 4) {
   return ticks;
 }
 
+const defaultFmtValue = (v) => `${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg`;
+const defaultFmtTick = (t) => t.toLocaleString('pt-BR');
+
 /**
  * points: [{ label, value, deload }] em ordem cronológica.
+ * opts: { fmtValue (tooltip), fmtTick (eixo y), ariaLabel }.
  * Renderiza dentro de `container` (limpa o conteúdo) e liga a interação.
  */
-export function renderLineChart(container, points) {
+export function renderLineChart(container, points, opts = {}) {
+  const fmtValue = opts.fmtValue ?? defaultFmtValue;
+  const fmtTick = opts.fmtTick ?? defaultFmtTick;
   container.innerHTML = '';
   if (!points.length) return;
 
@@ -52,7 +58,7 @@ export function renderLineChart(container, points) {
     .map((t) => `<line x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"/>`)
     .join('');
   const yLabels = ticks
-    .map((t) => `<text x="${PAD.left - 8}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="var(--axis-ink)">${t.toLocaleString('pt-BR')}</text>`)
+    .map((t) => `<text x="${PAD.left - 8}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="var(--axis-ink)">${fmtTick(t)}</text>`)
     .join('');
 
   // Rótulos de x: primeiro, meio e último (sem poluir).
@@ -81,7 +87,7 @@ export function renderLineChart(container, points) {
     .join('');
 
   container.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Progressão de e1RM">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.ariaLabel ?? 'Progressão de e1RM'}">
       ${grid}
       <line x1="${PAD.left}" x2="${W - PAD.right}" y1="${PAD.top + plotH}" y2="${PAD.top + plotH}" stroke="var(--border)" stroke-width="1"/>
       ${yLabels}
@@ -110,7 +116,7 @@ export function renderLineChart(container, points) {
     cross.setAttribute('x1', x(best));
     cross.setAttribute('x2', x(best));
     cross.setAttribute('visibility', 'visible');
-    tip.innerHTML = `${p.label}${p.deload ? ' · deload' : ''}<br><b>${p.value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg</b>`;
+    tip.innerHTML = `${p.label}${p.deload ? ' · deload' : ''}<br><b>${fmtValue(p.value)}</b>`;
     tip.style.display = 'block';
     const fx = (x(best) / W) * rect.width;
     tip.style.left = `${Math.min(Math.max(fx, 55), rect.width - 55)}px`;
@@ -122,4 +128,97 @@ export function renderLineChart(container, points) {
     tip.style.display = 'none';
     cross.setAttribute('visibility', 'hidden');
   });
+}
+
+/*
+ * Gráfico de barras SVG — série única, valores inteiros pequenos
+ * (treinos por semana). Topo arredondado de 4px ancorado na linha de base;
+ * semana de deload = barra vazada (canal além da cor). Tooltip por barra.
+ */
+export function renderBarChart(container, points, opts = {}) {
+  const fmtValue = opts.fmtValue ?? ((v) => String(v));
+  container.innerHTML = '';
+  if (!points.length) return;
+
+  const BH = 200;
+  const pad = { top: 12, right: 14, bottom: 30, left: 30 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = BH - pad.top - pad.bottom;
+  const baseY = pad.top + plotH;
+  const vMax = Math.max(4, ...points.map((p) => p.value));
+  const y = (v) => baseY - (v / vMax) * plotH;
+
+  const slot = plotW / points.length;
+  const barW = Math.min(36, slot * 0.62);
+  const bx = (i) => pad.left + slot * i + (slot - barW) / 2;
+  const center = (i) => bx(i) + barW / 2;
+
+  const step = vMax <= 6 ? 1 : Math.ceil(vMax / 4);
+  const ticks = [];
+  for (let t = 0; t <= vMax; t += step) ticks.push(t);
+
+  const grid = ticks
+    .map((t) => `<line x1="${pad.left}" x2="${W - pad.right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"/>`)
+    .join('');
+  const yLabels = ticks
+    .map((t) => `<text x="${pad.left - 8}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="var(--axis-ink)">${t}</text>`)
+    .join('');
+
+  const xIdx = points.length <= 3
+    ? points.map((_, i) => i)
+    : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+  const xLabels = [...new Set(xIdx)]
+    .map((i) => {
+      const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
+      return `<text x="${center(i)}" y="${BH - 8}" text-anchor="${anchor}" font-size="11" fill="var(--axis-ink)">${points[i].label}</text>`;
+    })
+    .join('');
+
+  const bars = points
+    .map((p, i) => {
+      if (p.value <= 0) return '';
+      const x0 = bx(i);
+      const top = y(p.value);
+      const r = Math.min(4, baseY - top);
+      const d = `M${x0},${baseY} L${x0},${top + r} Q${x0},${top} ${x0 + r},${top} ` +
+        `L${x0 + barW - r},${top} Q${x0 + barW},${top} ${x0 + barW},${top + r} L${x0 + barW},${baseY} Z`;
+      return p.deload
+        ? `<path d="${d}" fill="var(--card)" stroke="var(--series-1)" stroke-width="2"/>`
+        : `<path d="${d}" fill="var(--series-1)"/>`;
+    })
+    .join('');
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${W} ${BH}" role="img" aria-label="${opts.ariaLabel ?? 'Treinos por semana'}">
+      ${grid}
+      <line x1="${pad.left}" x2="${W - pad.right}" y1="${baseY}" y2="${baseY}" stroke="var(--border)" stroke-width="1"/>
+      ${yLabels}
+      ${xLabels}
+      ${bars}
+    </svg>
+    <div class="chart-tip"></div>
+  `;
+
+  const svg = container.querySelector('svg');
+  const tip = container.querySelector('.chart-tip');
+
+  function showNearest(clientX) {
+    const rect = svg.getBoundingClientRect();
+    const relX = ((clientX - rect.left) / rect.width) * W;
+    let best = 0;
+    let bestDist = Infinity;
+    points.forEach((_, i) => {
+      const d = Math.abs(center(i) - relX);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    const p = points[best];
+    tip.innerHTML = `semana de ${p.label}${p.deload ? ' · deload' : ''}<br><b>${fmtValue(p.value)}</b>`;
+    tip.style.display = 'block';
+    const fx = (center(best) / W) * rect.width;
+    tip.style.left = `${Math.min(Math.max(fx, 65), rect.width - 65)}px`;
+  }
+
+  svg.addEventListener('pointerdown', (e) => showNearest(e.clientX));
+  svg.addEventListener('pointermove', (e) => { if (e.buttons || e.pointerType === 'mouse') showNearest(e.clientX); });
+  svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
 }

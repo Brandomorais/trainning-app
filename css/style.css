@@ -348,6 +348,10 @@ input[type="date"] {
   color: var(--muted);
 }
 .stat b { display: block; font-size: 1.15rem; color: var(--text); margin-top: 2px; }
+.pr-sub { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.total-card { padding: 14px 16px; }
+.total-card b { display: block; font-size: 1.5rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
 .chart-card { padding: 16px 10px 10px 16px; }
 .chart-card h2 { font-size: 0.95rem; margin: 0 0 2px 2px; }

@@ -5,6 +5,7 @@
 import {
   DAYS,
   EXERCISES,
+  CARDIO_MODALITIES,
   FIXED_WARMUP,
   GENERAL_WARMUP,
   RAMP_HINT,
@@ -12,8 +13,16 @@ import {
   RPE_SCALE,
   youtubeURL,
 } from '../program.js';
-import { getLogs, addLog, deleteLog, getCycle } from '../db.js';
-import { toISODate, formatDateLong, cycleWeek, advise } from '../progression.js';
+import { getLogs, addLog, deleteLog, getCycle, getCardio, addCardio, deleteCardio } from '../db.js';
+import {
+  toISODate,
+  formatDateLong,
+  cycleWeek,
+  advise,
+  parseTime,
+  formatTime,
+  paceFor,
+} from '../progression.js';
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -122,6 +131,74 @@ function slotCard(slot, ctx) {
     </section>`;
 }
 
+/* ---------- Dia aeróbico ---------- */
+const fmtDist = (meters, mod) =>
+  mod.unit === 'km'
+    ? `${(meters / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} km`
+    : `${meters.toLocaleString('pt-BR')} m`;
+
+const paceLabel = (mod) => (mod.paceRef === 1000 ? 'min/km' : `min/${mod.paceRef}m`);
+
+function cardioChips(todays) {
+  if (!todays.length) return '';
+  const chips = todays
+    .map((c) => {
+      const mod = CARDIO_MODALITIES[c.modality] ?? { name: c.modality, unit: 'm', paceRef: 100 };
+      const pace = paceFor(c.meters, c.seconds, mod.paceRef);
+      return `<span class="set-chip">${mod.name} · ${fmtDist(c.meters, mod)} · ${formatTime(c.seconds)} · ${formatTime(pace)} ${paceLabel(mod)}
+        <button class="del-cardio" data-id="${c.id}" aria-label="Apagar registro">✕</button></span>`;
+    })
+    .join('');
+  return `<div class="done-sets">${chips}</div>`;
+}
+
+function cardioBody(day, ctx) {
+  const todays = ctx.cardio
+    .filter((c) => c.date === ctx.date)
+    .sort((a, b) => a.createdAt - b.createdAt);
+  const lastUsed = [...ctx.cardio].sort((a, b) => b.createdAt - a.createdAt)[0]?.modality;
+  const selMod = CARDIO_MODALITIES[lastUsed] ? lastUsed : Object.keys(CARDIO_MODALITIES)[0];
+  const mod = CARDIO_MODALITIES[selMod];
+
+  const options = Object.entries(CARDIO_MODALITIES)
+    .map(([k, m]) => `<option value="${k}"${k === selMod ? ' selected' : ''}>${m.name}</option>`)
+    .join('');
+
+  return `
+    <section class="card cardio-form">
+      <div class="ex-head">
+        <h2>Registrar sessão
+          <a class="video-link-inline" id="cardio-video" href="${youtubeURL(mod)}" target="_blank" rel="noopener" aria-label="Ver técnica no YouTube">▶</a>
+          ${todays.length ? '<span class="done-mark">✓</span>' : ''}</h2>
+      </div>
+      ${day.note ? `<p class="muted small ex-meta">${day.note}</p>` : ''}
+      ${cardioChips(todays)}
+      <label class="field" style="margin-top:10px">
+        <span>Modalidade</span>
+        <select id="cardio-mod">${options}</select>
+      </label>
+      <label class="field-label">Distância (<span id="cardio-unit">${mod.unit}</span>)</label>
+      <input class="notes-input in-dist" type="text" inputmode="decimal" placeholder="${mod.unit === 'km' ? 'ex.: 5 ou 5,2' : 'ex.: 1500'}" style="margin-top:0">
+      <label class="field-label">Tempo</label>
+      <input class="notes-input in-time" type="text" placeholder="42:30 (ou 1:02:10, ou só minutos)" style="margin-top:0">
+      <p class="hint pace-preview" hidden></p>
+      <input class="notes-input in-cardio-notes" type="text" placeholder="Notas (opcional)" maxlength="200">
+      <button class="log-btn" id="cardio-log">Registrar sessão</button>
+    </section>`;
+}
+
+function updatePacePreview(el) {
+  const preview = el.querySelector('.pace-preview');
+  if (!preview) return;
+  const mod = CARDIO_MODALITIES[el.querySelector('#cardio-mod').value];
+  const dist = parseNum(el.querySelector('.in-dist').value);
+  const seconds = parseTime(el.querySelector('.in-time').value);
+  const meters = dist && dist > 0 ? dist * (mod.unit === 'km' ? 1000 : 1) : null;
+  const pace = meters && seconds ? paceFor(meters, seconds, mod.paceRef) : null;
+  preview.hidden = !pace;
+  if (pace) preview.textContent = `Pace: ${formatTime(pace)} ${paceLabel(mod)}`;
+}
+
 /*
  * `logDate` permite registro retroativo: tudo na tela (chips, sugestões,
  * deload e as séries gravadas) passa a valer para essa data. Só vive
@@ -136,10 +213,10 @@ export async function render(el, dayKey, logDate) {
 
   const today = toISODate();
   const date = logDate && logDate <= today ? logDate : today;
-  const [logs, cycle] = await Promise.all([getLogs(), getCycle()]);
+  const [logs, cycle, cardio] = await Promise.all([getLogs(), getCycle(), getCardio()]);
   const wk = cycleWeek(cycle, date);
   const deload = wk?.deload ?? false;
-  const ctx = { logs, date, deload, dayKey };
+  const ctx = { logs, cardio, date, deload, dayKey };
 
   let body = '';
   if (day.kind === 'lift') {
@@ -149,6 +226,8 @@ export async function render(el, dayKey, logDate) {
       ${warmupHTML(day)}
       ${rpeRefHTML()}
       ${day.slots.map((s) => slotCard(s, ctx)).join('')}`;
+  } else if (day.kind === 'cardio') {
+    body = cardioBody(day, ctx);
   } else {
     body = `
       <section class="card">
@@ -160,7 +239,7 @@ export async function render(el, dayKey, logDate) {
 
   const isToday = date === today;
   const datePicker =
-    day.kind !== 'lift'
+    day.kind !== 'lift' && day.kind !== 'cardio'
       ? ''
       : `
     <label class="field log-date${isToday ? '' : ' not-today'}">
@@ -189,6 +268,21 @@ export async function render(el, dayKey, logDate) {
   el.onchange = async (e) => {
     if (e.target.id === 'log-date' && e.target.value) {
       await render(el, dayKey, e.target.value);
+      return;
+    }
+    // Trocar a modalidade não rerenderiza para não apagar o que já foi digitado.
+    if (e.target.id === 'cardio-mod') {
+      const mod = CARDIO_MODALITIES[e.target.value];
+      el.querySelector('#cardio-unit').textContent = mod.unit;
+      el.querySelector('.in-dist').placeholder = mod.unit === 'km' ? 'ex.: 5 ou 5,2' : 'ex.: 1500';
+      el.querySelector('#cardio-video').href = youtubeURL(mod);
+      updatePacePreview(el);
+    }
+  };
+
+  el.oninput = (e) => {
+    if (e.target.classList.contains('in-dist') || e.target.classList.contains('in-time')) {
+      updatePacePreview(el);
     }
   };
 
@@ -216,6 +310,32 @@ export async function render(el, dayKey, logDate) {
         await deleteLog(del.dataset.id);
         await rerender();
       }
+      return;
+    }
+
+    const delCardio = e.target.closest('.del-cardio');
+    if (delCardio) {
+      if (confirm('Apagar este registro?')) {
+        await deleteCardio(delCardio.dataset.id);
+        await rerender();
+      }
+      return;
+    }
+
+    if (e.target.closest('#cardio-log')) {
+      const mod = CARDIO_MODALITIES[el.querySelector('#cardio-mod').value];
+      const dist = parseNum(el.querySelector('.in-dist').value);
+      const seconds = parseTime(el.querySelector('.in-time').value);
+      if (!dist || dist <= 0) { alert(`Informe a distância em ${mod.unit === 'km' ? 'quilômetros' : 'metros'}.`); return; }
+      if (!seconds) { alert('Informe o tempo — ex.: 42:30, 1:02:10 ou só os minutos.'); return; }
+      await addCardio({
+        date,
+        modality: el.querySelector('#cardio-mod').value,
+        meters: Math.round(dist * (mod.unit === 'km' ? 1000 : 1)),
+        seconds,
+        notes: el.querySelector('.in-cardio-notes').value.trim(),
+      });
+      await rerender();
       return;
     }
 

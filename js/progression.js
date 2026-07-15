@@ -48,6 +48,41 @@ export function fmtKg(n) {
   return `${Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg`;
 }
 
+/* ---------- Tempo e pace (aeróbico) ---------- */
+/*
+ * Aceita "42:30" (min:seg), "1:02:10" (h:min:seg) e "42" ou "42,5" (minutos).
+ * Retorna segundos inteiros, ou null se não der para interpretar.
+ */
+export function parseTime(str) {
+  const s = String(str ?? '').trim().replace(',', '.');
+  if (!s) return null;
+  const parts = s.split(':');
+  if (parts.length > 3 || parts.some((p) => !/^\d+(\.\d+)?$/.test(p))) return null;
+  let sec;
+  if (parts.length === 1) sec = parseFloat(parts[0]) * 60;
+  else if (parts.length === 2) sec = +parts[0] * 60 + +parts[1];
+  else sec = +parts[0] * 3600 + +parts[1] * 60 + +parts[2];
+  if (parts.length >= 2 && +parts[parts.length - 1] >= 60) return null;
+  if (parts.length === 3 && +parts[1] >= 60) return null;
+  sec = Math.round(sec);
+  return sec > 0 ? sec : null;
+}
+
+/** Segundos → "42:30" ou "1:02:10". */
+export function formatTime(totalSeconds) {
+  const s = Math.round(totalSeconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const p = (n) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${p(m)}:${p(s % 60)}` : `${m}:${p(s % 60)}`;
+}
+
+/** Pace em segundos por `paceRef` metros (100 → /100m, 1000 → /km). */
+export function paceFor(meters, seconds, paceRef) {
+  if (!meters || !seconds) return null;
+  return (seconds / meters) * paceRef;
+}
+
 /* ---------- Ciclo (semanas 1-4 + deload na 5) ---------- */
 export function cycleWeek(cycle, dateISO = toISODate()) {
   if (!cycle || !cycle.startDate) return null;
@@ -90,6 +125,47 @@ function sessionFailed(session, prescribedReps) {
   const w = topWeight(session.sets);
   const repsAtTop = Math.max(0, ...session.sets.filter((s) => s.weight === w).map((s) => s.reps));
   return repsAtTop < prescribedReps;
+}
+
+/* ---------- Resumo: PRs e frequência semanal ---------- */
+export function addDaysISO(iso, days) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
+}
+
+/** Melhor e1RM já registrado do exercício: { e1rm, weight, reps, date } ou null. */
+export function bestPR(logs, exerciseId) {
+  let best = null;
+  for (const l of logs) {
+    if (l.exerciseId !== exerciseId || !l.weight || !l.reps) continue;
+    const e = epley(l.weight, l.reps);
+    if (!best || e > best.e1rm) best = { e1rm: e, weight: l.weight, reps: l.reps, date: l.date };
+  }
+  return best;
+}
+
+/*
+ * Treinos de força por semana (dom-sáb), das últimas `weeks` semanas até a
+ * atual. Um treino = par (data, dia do programa) distinto. Semanas vazias
+ * anteriores ao primeiro registro são cortadas.
+ */
+export function weeklyLiftCounts(logs, weeks = 12, todayISO = toISODate()) {
+  const sunday0 = lastSundayISO(new Date(`${todayISO}T12:00:00`));
+  const out = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const start = addDaysISO(sunday0, -7 * i);
+    const end = addDaysISO(start, 6);
+    const wlogs = logs.filter((l) => l.date >= start && l.date <= end);
+    out.push({
+      label: formatDateShort(start),
+      value: new Set(wlogs.map((l) => `${l.date}|${l.dayKey}`)).size,
+      deload: wlogs.some((l) => l.isDeload),
+      start,
+    });
+  }
+  while (out.length > 1 && out[0].value === 0) out.shift();
+  return out;
 }
 
 /* ---------- Detecção de estagnação ---------- */

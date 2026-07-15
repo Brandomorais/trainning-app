@@ -55,6 +55,10 @@ RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
 - **Vídeos**: exercícios e itens de mobilidade têm um `query` que vira link de
   busca no YouTube (o ▶ nas telas). Para fixar um vídeo favorito, adicione
   `url: 'https://youtu.be/…'` ao item — o link direto sempre ganha da busca.
+- **Aeróbico**: segunda e quarta apontam para o dia `aerobico` — registro de
+  distância + tempo com pace automático. As modalidades ficam em
+  `CARDIO_MODALITIES` (natação em m·min/100m, corrida em km·min/km); modalidade
+  nova é uma linha, e a chave nunca deve ser renomeada (o registro é por chave).
 - **Estagnação**: para os `main`, o app analisa as últimas 3 sessões da mesma
   prescrição (agacho pesado ≠ agacho volume) e cruza dois sinais: e1RM que não
   sobe e RPE ≥ alvo + 1. Um sinal → aviso amarelo e sugestão de segurar a
@@ -107,8 +111,29 @@ Cada série logada:
 }
 ```
 
+Sessão aeróbica (distância sempre em **metros**, tempo em **segundos** — as
+telas convertem para km e mm:ss):
+
+```json
+{
+  "id": "uuid",
+  "date": "2026-07-15",
+  "modality": "natacao",
+  "meters": 1500,
+  "seconds": 2550,
+  "notes": null,
+  "createdAt": 1752595200000
+}
+```
+
 Ciclo: `{ "startDate": "2026-07-12" }` — semanas 1-4 + deload na 5, calculado
-pela data. O export JSON embala `{ app, schemaVersion, exportedAt, cycle, logs }`.
+pela data. O export JSON embala
+`{ app, schemaVersion: 2, exportedAt, cycle, logs, cardio }` — backups antigos
+(schema 1, sem `cardio`) continuam importáveis.
+
+O Histórico abre com um **Resumo**: PRs de e1RM dos três básicos (🏆 quando o
+recorde saiu na semana), o total de powerlifting e os treinos de barra por
+semana (contador da semana atual + gráfico das últimas 12).
 
 A home lista **todos os treinos** (a sessão do calendário em destaque, ✓ nas já
 feitas na semana). Escolher um treino manualmente vale até o fim do dia: o app

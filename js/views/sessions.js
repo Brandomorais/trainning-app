@@ -4,7 +4,7 @@
  * Tocar num card grava a escolha do dia e abre a sessão.
  */
 import { DAYS, WEEKDAYS } from '../program.js';
-import { getLogs, getCycle, setCycle, setSelectedSession } from '../db.js';
+import { getLogs, getCardio, getCycle, setCycle, setSelectedSession } from '../db.js';
 import { toISODate, lastSundayISO, cycleWeek, formatDateLong } from '../progression.js';
 
 function weekBadge(wk) {
@@ -19,10 +19,10 @@ function cardHTML(key, { doneKeys, todayKey }) {
   const meta =
     day.kind === 'lift'
       ? `${day.slots.length} exercícios`
-      : day.kind === 'pool'
-        ? 'Recuperação ativa'
+      : day.kind === 'cardio'
+        ? 'Distância + tempo · pace automático'
         : 'Descanso';
-  const done = day.kind === 'lift' && doneKeys.has(key);
+  const done = day.kind !== 'off' && doneKeys.has(key);
   return `
     <a class="session-card${key === todayKey ? ' today' : ''}" href="#/treino/${key}" data-key="${key}">
       <div>
@@ -35,20 +35,20 @@ function cardHTML(key, { doneKeys, todayKey }) {
 
 export async function render(el) {
   const date = toISODate();
-  const [logs, cycle] = await Promise.all([getLogs(), getCycle()]);
+  const [logs, cardio, cycle] = await Promise.all([getLogs(), getCardio(), getCycle()]);
   const wk = cycleWeek(cycle, date);
   const todayKey = WEEKDAYS[new Date().getDay()];
 
-  // Sessões com série logada na semana atual (domingo a sábado).
+  // Sessões com registro na semana atual (domingo a sábado).
   const sunday = lastSundayISO();
   const saturday = (() => {
     const d = new Date(`${sunday}T12:00:00`);
     d.setDate(d.getDate() + 6);
     return toISODate(d);
   })();
-  const doneKeys = new Set(
-    logs.filter((l) => l.date >= sunday && l.date <= saturday).map((l) => l.dayKey)
-  );
+  const inWeek = (x) => x.date >= sunday && x.date <= saturday;
+  const doneKeys = new Set(logs.filter(inWeek).map((l) => l.dayKey));
+  if (cardio.some(inWeek)) doneKeys.add('aerobico');
 
   const ctx = { doneKeys, todayKey };
   const others = Object.keys(DAYS).filter((k) => k !== todayKey);

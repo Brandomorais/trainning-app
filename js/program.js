@@ -59,10 +59,10 @@ export const DAYS = {
       { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s' },
     ],
   },
-  'piscina-leve': {
-    name: 'Piscina — 30-40min leve/moderado',
-    kind: 'pool',
-    note: 'Recuperação ativa. Nada de intensidade: o objetivo é chegar melhor no treino de terça.',
+  'aerobico': {
+    name: 'Aeróbico — natação ou corrida',
+    kind: 'cardio',
+    note: 'Recuperação ativa: intensidade leve a moderada. O objetivo é chegar melhor no próximo treino de barra.',
   },
   'barra-b': {
     name: 'Barra B — Terra pesado',
@@ -79,10 +79,6 @@ export const DAYS = {
       { exerciseId: 'puxada', sets: 4, reps: 10, rest: '90s-2min' },
       { exerciseId: 'core', sets: 3, reps: null, rest: '60s' },
     ],
-  },
-  'piscina-moderada': {
-    name: 'Piscina — 40min moderado',
-    kind: 'pool',
   },
   'barra-c': {
     name: 'Barra C — Supino pesado',
@@ -125,12 +121,23 @@ export const DAYS = {
 /* Dia da semana (Date.getDay(): 0 = domingo) → sessão */
 export const WEEKDAYS = {
   0: 'barra-a',
-  1: 'piscina-leve',
+  1: 'aerobico',
   2: 'barra-b',
-  3: 'piscina-moderada',
+  3: 'aerobico',
   4: 'barra-c',
   5: 'barra-d',
   6: 'off',
+};
+
+/*
+ * Modalidades do dia aeróbico — edite como os exercícios (nova modalidade =
+ * nova linha; a chave nunca deve ser renomeada, o registro é gravado por ela).
+ *  - unit:    unidade de digitação da distância ('m' ou 'km')
+ *  - paceRef: metros de referência do pace (100 → min/100m; 1000 → min/km)
+ */
+export const CARDIO_MODALITIES = {
+  'natacao': { name: 'Natação', unit: 'm',  paceRef: 100,  query: 'técnica nado crawl respiração' },
+  'corrida': { name: 'Corrida', unit: 'km', paceRef: 1000, query: 'técnica de corrida postura cadência' },
 };
 
 export const FIXED_WARMUP = {

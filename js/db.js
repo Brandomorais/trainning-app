@@ -1,13 +1,14 @@
 /*
  * Camada de persistência — único módulo que toca o IndexedDB.
- * Chaves: logs (array de séries), cycle ({ startDate }), meta.
+ * Chaves: logs (séries de força), cardio (sessões aeróbicas),
+ * cycle ({ startDate }), selectedSession.
  */
 import { get, set, del } from './vendor/idb-keyval.js';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2; // v2: + cardio (backups v1 seguem importáveis)
 const APP_ID = 'treino-powerlifting';
 
-const KEYS = { logs: 'logs', cycle: 'cycle', selectedSession: 'selectedSession' };
+const KEYS = { logs: 'logs', cardio: 'cardio', cycle: 'cycle', selectedSession: 'selectedSession' };
 
 export function newId() {
   return (crypto.randomUUID)
@@ -49,6 +50,37 @@ export async function deleteLog(id) {
   await saveLogs(logs.filter((l) => l.id !== id));
 }
 
+/* ---------- Sessões aeróbicas ---------- */
+export async function getCardio() {
+  return (await get(KEYS.cardio)) ?? [];
+}
+
+async function saveCardio(list) {
+  await set(KEYS.cardio, list);
+}
+
+/* Distância sempre em metros e tempo em segundos; a tela converte. */
+export async function addCardio({ date, modality, meters, seconds, notes }) {
+  const entry = {
+    id: newId(),
+    date,
+    modality,
+    meters,
+    seconds,
+    notes: notes || null,
+    createdAt: Date.now(),
+  };
+  const list = await getCardio();
+  list.push(entry);
+  await saveCardio(list);
+  return entry;
+}
+
+export async function deleteCardio(id) {
+  const list = await getCardio();
+  await saveCardio(list.filter((c) => c.id !== id));
+}
+
 /* ---------- Ciclo ---------- */
 export async function getCycle() {
   return (await get(KEYS.cycle)) ?? null;
@@ -75,6 +107,7 @@ export async function exportData() {
     exportedAt: new Date().toISOString(),
     cycle: await getCycle(),
     logs: await getLogs(),
+    cardio: await getCardio(),
   };
 }
 
@@ -85,16 +118,21 @@ export function validateBackup(data) {
     return `Backup de uma versão mais nova do app (schema ${data.schemaVersion}).`;
   }
   if (!Array.isArray(data.logs)) return 'Backup sem a lista de séries (logs).';
+  if (data.schemaVersion >= 2 && !Array.isArray(data.cardio)) {
+    return 'Backup sem a lista de sessões aeróbicas (cardio).';
+  }
   return null;
 }
 
 export async function importData(data) {
   await saveLogs(data.logs);
+  await saveCardio(data.cardio ?? []); // backups v1 entram sem cardio
   if (data.cycle && data.cycle.startDate) await setCycle(data.cycle);
 }
 
 export async function wipeAll() {
   await del(KEYS.logs);
+  await del(KEYS.cardio);
   await del(KEYS.cycle);
   await del(KEYS.selectedSession);
 }
