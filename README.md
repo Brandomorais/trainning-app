@@ -58,7 +58,12 @@ alto). Ajustado em jul/2026 com base na literatura — pesquisa e fontes em
 | **Sex** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 4x8 · Búlgaro 3x10/perna · Desenvolvimento 3x8 · Tríceps/Bíceps/Mesa flexora 3x12 |
 | **Sáb** | Off | Descanso |
 
-Todo dia de barra: mobilidade dinâmica específica + band pull-apart 2x15.
+Aquecimento (estrutura RAMP, ~5min + rampa nos dias pesados): band pull-apart
+2x15 todo dia de barra + mobilidade enxuta e específica do dia — **Dom**:
+agacho profundo c/ peso corporal 30-45s + tornozelo · **Ter**: dobradiça sem
+carga + cat-camel · **Qui**: rotação externa de ombro · **Sex**: só o band
+pull-apart. Nada de estático longo antes do treino.
+
 Terra técnico e agacho volume progridem **separados** dos dias pesados (a
 sugestão de carga é por dia do programa).
 
