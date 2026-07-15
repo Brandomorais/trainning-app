@@ -1,0 +1,108 @@
+# Treino Powerlifting — PWA
+
+App pessoal de controle de treino de powerlifting. **100% offline** depois do
+primeiro carregamento, **dados só no aparelho** (IndexedDB) — sem backend, sem
+login, sem nuvem. Feito em vanilla JS + HTML, sem build step e sem dependências
+de runtime.
+
+## Rodar local (desenvolvimento)
+
+```bash
+npm run dev
+# abre http://localhost:5173
+```
+
+(Usa `npx serve` — qualquer servidor estático funciona. Em `localhost` o
+service worker registra normalmente.)
+
+## Instalar no iPhone
+
+Service worker (e portanto o modo offline/instalação como PWA) exige **HTTPS**.
+O caminho recomendado é o GitHub Pages:
+
+1. Crie um repositório no GitHub e faça push desta pasta:
+   ```bash
+   git init && git add -A && git commit -m "v1"
+   git remote add origin git@github.com:SEU_USUARIO/trainning-app.git
+   git push -u origin main
+   ```
+2. No GitHub: **Settings → Pages → Source: Deploy from a branch → main / root**.
+3. Aguarde o deploy e abra `https://SEU_USUARIO.github.io/trainning-app/` no
+   **Safari do iPhone**.
+4. **Compartilhar → Adicionar à Tela de Início.** Pronto: abre em tela cheia,
+   funciona sem sinal na academia.
+
+> O repositório público expõe apenas o **código**. Seus treinos ficam no
+> IndexedDB do iPhone e nunca saem do aparelho.
+
+### Atualizações
+
+Editou algo → `git push`. Na próxima vez que abrir o app **com internet**, o
+service worker baixa a versão nova em segundo plano e ela vale a partir da
+abertura seguinte. Só é preciso mexer em `CACHE_VERSION` (no `sw.js`) se você
+renomear/remover arquivos.
+
+## Editar o programa de treino
+
+Tudo em **`js/program.js`**: exercícios, dias, prescrições (séries × reps ×
+RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
+
+- Regra única: **não renomeie o id (a chave) de um exercício existente** — o
+  histórico é gravado por id. Mudar o `name` exibido pode.
+- `type` do exercício dirige a sugestão de progressão:
+  `main` (SBD, +kg/semana via `increment`), `accessory` (progressão dupla via
+  `repRange`), `quality` (reps/qualidade, sem carga).
+- **Vídeos**: exercícios e itens de mobilidade têm um `query` que vira link de
+  busca no YouTube (o ▶ nas telas). Para fixar um vídeo favorito, adicione
+  `url: 'https://youtu.be/…'` ao item — o link direto sempre ganha da busca.
+
+## Backup
+
+Os dados são locais — **exporte de tempos em tempos** em
+*Config → Exportar dados (JSON)* (no iPhone abre o share sheet: salve em
+Arquivos/iCloud ou mande por AirDrop). *Importar dados* restaura um backup
+(substitui os dados atuais).
+
+## Estrutura
+
+```
+index.html               shell único (SPA, rotas por hash)
+manifest.webmanifest     manifest do PWA
+sw.js                    service worker (pré-cache + stale-while-revalidate)
+css/style.css            tema escuro, mobile-first
+js/app.js                bootstrap + roteador
+js/db.js                 persistência (IndexedDB) — único módulo que toca o banco
+js/program.js            programa da semana (edite aqui)
+js/progression.js        e1RM (Epley), ciclo/deload, regras de progressão
+js/components/chart.js   gráfico de linha SVG
+js/views/                telas: lista de treinos, sessão, histórico, config
+js/vendor/idb-keyval.js  mini wrapper de IndexedDB (vendorado)
+icons/                   ícones do PWA
+```
+
+## Modelo de dados
+
+Cada série logada:
+
+```json
+{
+  "id": "uuid",
+  "date": "2026-07-15",
+  "dayKey": "barra-a",
+  "exerciseId": "agacho",
+  "setNumber": 2,
+  "weight": 90,
+  "reps": 4,
+  "rpe": 8,
+  "notes": null,
+  "isDeload": false,
+  "createdAt": 1752595200000
+}
+```
+
+Ciclo: `{ "startDate": "2026-07-12" }` — semanas 1-4 + deload na 5, calculado
+pela data. O export JSON embala `{ app, schemaVersion, exportedAt, cycle, logs }`.
+
+A home lista **todos os treinos** (a sessão do calendário em destaque, ✓ nas já
+feitas na semana). Escolher um treino manualmente vale até o fim do dia: o app
+reabre direto nele e à meia-noite volta a sugerir pelo calendário.
