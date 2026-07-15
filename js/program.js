@@ -48,10 +48,8 @@ export const DAYS = {
     kind: 'lift',
     generalWarmup: true,
     mobility: [
-      { name: 'Agacho profundo com peso corporal', query: 'agacho profundo peso corporal mobilidade' },
-      { name: 'Mobilidade de quadril', query: 'mobilidade de quadril dinâmica aquecimento' },
+      { name: 'Agacho profundo com peso corporal — 30-45s', query: 'agacho profundo peso corporal mobilidade' },
       { name: 'Mobilidade de tornozelo', query: 'mobilidade de tornozelo para agachamento' },
-      { name: 'Cat-camel', query: 'cat camel mobilidade coluna' },
     ],
     slots: [
       { exerciseId: 'agacho', sets: 4, reps: 4, rpe: 8, rest: '3-5min', ramp: true },
@@ -71,9 +69,8 @@ export const DAYS = {
     kind: 'lift',
     generalWarmup: true,
     mobility: [
-      { name: 'Dobradiça de quadril sem carga', query: 'hip hinge dobradiça de quadril como fazer' },
-      { name: 'Mobilidade torácica', query: 'mobilidade torácica aquecimento' },
-      { name: 'Ativação de glúteo', query: 'ativação de glúteo aquecimento' },
+      { name: 'Dobradiça de quadril sem carga (ensaio)', query: 'hip hinge dobradiça de quadril como fazer' },
+      { name: 'Cat-camel', query: 'cat camel mobilidade coluna' },
     ],
     slots: [
       { exerciseId: 'terra', sets: 4, reps: 3, rpe: 8, rest: '3-5min', ramp: true },
@@ -88,7 +85,6 @@ export const DAYS = {
     generalWarmup: false,
     mobility: [
       { name: 'Rotação externa de ombro', query: 'rotação externa de ombro elástico aquecimento' },
-      { name: 'Torácica em extensão', query: 'extensão torácica mobilidade' },
     ],
     slots: [
       { exerciseId: 'supino', sets: 5, reps: 3, rpe: 8, rest: '3-4min', ramp: true },
@@ -102,10 +98,7 @@ export const DAYS = {
     kind: 'lift',
     generalWarmup: false,
     noPR: true,
-    mobility: [
-      { name: 'Rotação externa de ombro', query: 'rotação externa de ombro elástico aquecimento' },
-      { name: 'Torácica em extensão', query: 'extensão torácica mobilidade' },
-    ],
+    /* Dia leve: só o band pull-apart fixo, sem mobilidade extra. */
     slots: [
       { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min' },
       { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna' },
