@@ -152,9 +152,18 @@ details.warmup summary::after { content: "▸"; margin-left: auto; color: var(--
 details.warmup[open] summary::after { transform: rotate(90deg); }
 .warmup ul { list-style: none; margin-top: 8px; }
 .warmup li { padding: 8px 0; border-top: 1px solid var(--border); font-size: 0.95rem; }
-.warmup li.fixed { color: var(--accent); font-weight: 600; }
-.warmup li.fixed .video-link { color: var(--accent); }
-.warmup li.ramp { color: var(--muted); font-size: 0.88rem; }
+/* Card da rampa do dia: percentuais fixos, pausas e calculadora */
+.ramp-card h2 { font-size: 1.1rem; }
+.ramp-pct { font-size: 0.92rem; line-height: 1.5; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.ramp-card .field-label { margin-top: 10px; }
+.ramp-card .in-ramp-target { margin-top: 0; max-width: 140px; }
+.ramp-line {
+  font-size: 0.92rem;
+  color: var(--good);
+  margin: 8px 2px 0;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
 
 /* Linha inteira tocável; só o ▶ é colorido para não virar mar de links */
 .video-link {
@@ -188,6 +197,13 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
 .ex-head .done-mark { color: var(--good); }
 .prescription { color: var(--accent); font-weight: 700; white-space: nowrap; font-size: 0.95rem; }
 .ex-meta { margin-top: 2px; }
+.return-line {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--good);
+  margin: -2px 2px 10px;
+  font-variant-numeric: tabular-nums;
+}
 
 .hint {
   background: var(--card-2);

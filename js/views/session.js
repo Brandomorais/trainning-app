@@ -7,8 +7,6 @@ import {
   EXERCISES,
   CARDIO_MODALITIES,
   FIXED_WARMUP,
-  GENERAL_WARMUP,
-  RAMP_HINT,
   MOBILITY_NOTE,
   RPE_SCALE,
   youtubeURL,
@@ -22,6 +20,10 @@ import {
   parseTime,
   formatTime,
   paceFor,
+  parseRestRange,
+  rampSets,
+  RAMP_STEPS,
+  RAMP_FLOOR_MIN,
 } from '../progression.js';
 
 const esc = (s) =>
@@ -45,10 +47,8 @@ const videoRow = (item, cls = '') =>
 
 function warmupHTML(day) {
   const items = [];
-  if (day.generalWarmup) items.push(`<li>${GENERAL_WARMUP}</li>`);
   for (const m of day.mobility ?? []) items.push(videoRow(m));
-  items.push(videoRow(FIXED_WARMUP, 'fixed'));
-  if ((day.slots ?? []).some((s) => s.ramp)) items.push(`<li class="ramp">${RAMP_HINT}</li>`);
+  items.push(videoRow(FIXED_WARMUP));
   return `
     <details class="warmup card" open>
       <summary>Aquecimento &amp; mobilidade</summary>
@@ -71,6 +71,67 @@ function setChips(todaysSets) {
     )
     .join('');
   return `<div class="done-sets">${chips}</div>`;
+}
+
+/* ---------- Rampa de aquecimento (bloco de aquecimento) ---------- */
+const fmtW = (w) => String(w).replace('.', ',');
+
+/** Linha fixa em percentuais: "vazia×10 · 50%×5 · 70%×3 · 85%×2 · 93%×1". */
+function rampPctText(fromFloor) {
+  const parts = RAMP_STEPS.map((s) => `${Math.round(s.pct * 100)}%×${s.reps}`);
+  return (fromFloor ? [] : ['vazia×10']).concat(parts).join(' · ');
+}
+
+/** Linha calculada da rampa para a carga digitada na calculadora. */
+function rampCalcText(slot, weight) {
+  const fromFloor = Boolean(EXERCISES[slot.exerciseId].rampFromFloor);
+  const steps = rampSets(weight, { fromFloor });
+  if (!steps.length) return 'Informe a carga de trabalho para calcular.';
+  const parts = steps.map((s, i) =>
+    !fromFloor && i === 0 ? `vazia×${s.reps}` : `${fmtW(s.weight)}×${s.reps}`
+  );
+  return `${parts.join(' · ')} → ${fmtW(weight)}kg`;
+}
+
+/*
+ * Um card por slot com `ramp: true`, logo após o aquecimento: percentuais
+ * fixos, pausas (protocolo da literatura — ver docs/validacao-programa.md
+ * §8.1) e calculadora com a carga de trabalho pré-preenchida pela sugestão
+ * do dia (editável, sem vínculo com o formulário de série do exercício).
+ */
+function rampCardsHTML(day, ctx) {
+  return (day.slots ?? [])
+    .filter((s) => s.ramp)
+    .map((slot) => {
+      const ex = EXERCISES[slot.exerciseId];
+      const fromFloor = Boolean(ex.rampFromFloor);
+      const pref = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey).weight ?? '';
+      return `
+        <section class="card ramp-card" data-ramp-ex="${slot.exerciseId}">
+          <h2>Rampa — ${ex.name}</h2>
+          <p class="ramp-pct">${rampPctText(fromFloor)}</p>
+          ${fromFloor ? `<p class="muted small">Com anilhas desde a 1ª aproximação (mín. ${RAMP_FLOOR_MIN}kg) — sem barra vazia.</p>` : ''}
+          <p class="muted small">Pausas: ~1min entre aproximações (troca de anilha) · 2-3min antes da 1ª série de trabalho.</p>
+          <label class="field-label">Carga de trabalho (kg)</label>
+          <input class="notes-input in-ramp-target" type="text" inputmode="decimal" value="${pref}" placeholder="kg">
+          <p class="ramp-line">${rampCalcText(slot, parseNum(pref))}</p>
+        </section>`;
+    })
+    .join('');
+}
+
+/*
+ * "⏱ volte ~HH:MM" no card da última série registrada: hora do registro +
+ * piso do descanso prescrito. Só para registro de hoje (retroativo não faz
+ * sentido) e some após 1h — reabrir o app à noite não mostra hora velha.
+ */
+function returnLineHTML(slot, ctx) {
+  if (!ctx.lastLog || ctx.lastLog.exerciseId !== slot.exerciseId) return '';
+  const range = parseRestRange(slot.rest);
+  if (!range || Date.now() - ctx.lastLog.createdAt > 3600e3) return '';
+  const t = new Date(ctx.lastLog.createdAt + range.min * 1000);
+  const hhmm = t.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `<p class="return-line">⏱ volte ~${hhmm}</p>`;
 }
 
 function slotCard(slot, ctx) {
@@ -112,6 +173,7 @@ function slotCard(slot, ctx) {
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
       ${setChips(todays)}
+      ${returnLineHTML(slot, ctx)}
       <label class="field-label">Carga (kg)</label>
       <div class="stepper">
         <button class="step-btn" data-delta="-2.5" aria-label="Menos 2,5 kg">−</button>
@@ -216,7 +278,13 @@ export async function render(el, dayKey, logDate) {
   const [logs, cycle, cardio] = await Promise.all([getLogs(), getCycle(), getCardio()]);
   const wk = cycleWeek(cycle, date);
   const deload = wk?.deload ?? false;
-  const ctx = { logs, cardio, date, deload, dayKey };
+  const lastLog =
+    date === today
+      ? logs
+          .filter((l) => l.date === date && l.dayKey === dayKey)
+          .reduce((a, b) => (!a || b.createdAt > a.createdAt ? b : a), null)
+      : null;
+  const ctx = { logs, cardio, date, deload, dayKey, lastLog };
 
   let body = '';
   if (day.kind === 'lift') {
@@ -224,6 +292,7 @@ export async function render(el, dayKey, logDate) {
       ${deload ? '<div class="banner-deload">Semana de deload: ~60% da carga, metade das séries, sem RPE alto. As prescrições abaixo já estão ajustadas.</div>' : ''}
       ${day.noPR ? '<div class="banner-info">Dia leve — não buscar PR.</div>' : ''}
       ${warmupHTML(day)}
+      ${rampCardsHTML(day, ctx)}
       ${rpeRefHTML()}
       ${day.slots.map((s) => slotCard(s, ctx)).join('')}`;
   } else if (day.kind === 'cardio') {
@@ -283,6 +352,11 @@ export async function render(el, dayKey, logDate) {
   el.oninput = (e) => {
     if (e.target.classList.contains('in-dist') || e.target.classList.contains('in-time')) {
       updatePacePreview(el);
+    }
+    if (e.target.classList.contains('in-ramp-target')) {
+      const card = e.target.closest('.ramp-card');
+      const slot = day.slots.find((s) => s.exerciseId === card.dataset.rampEx && s.ramp);
+      if (slot) card.querySelector('.ramp-line').textContent = rampCalcText(slot, parseNum(e.target.value));
     }
   };
 

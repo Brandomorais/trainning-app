@@ -26,7 +26,7 @@ export function youtubeURL(item) {
 export const EXERCISES = {
   'agacho':            { name: 'Agacho',            type: 'main', increment: 5,   query: 'agacho livre barra técnica' },
   'supino':            { name: 'Supino',            type: 'main', increment: 2.5, query: 'supino reto barra técnica' },
-  'terra':             { name: 'Terra',             type: 'main', increment: 5,   query: 'levantamento terra técnica' },
+  'terra':             { name: 'Terra',             type: 'main', increment: 5,   rampFromFloor: true, query: 'levantamento terra técnica' },
   'remada-curvada':    { name: 'Remada curvada',    type: 'accessory', repRange: [8, 12],  query: 'remada curvada barra técnica' },
   'stiff':             { name: 'Stiff',             type: 'accessory', repRange: [10, 12], query: 'stiff barra técnica' },
   'supino-fechado':    { name: 'Supino fechado',    type: 'accessory', repRange: [8, 10],  query: 'supino fechado técnica' },
@@ -46,7 +46,6 @@ export const DAYS = {
   'barra-a': {
     name: 'Barra A — Agacho pesado',
     kind: 'lift',
-    generalWarmup: true,
     mobility: [
       { name: 'Agacho profundo com peso corporal — 30-45s', query: 'agacho profundo peso corporal mobilidade' },
       { name: 'Mobilidade de tornozelo', query: 'mobilidade de tornozelo para agachamento' },
@@ -67,7 +66,6 @@ export const DAYS = {
   'barra-b': {
     name: 'Barra B — Terra pesado',
     kind: 'lift',
-    generalWarmup: true,
     mobility: [
       { name: 'Dobradiça de quadril sem carga (ensaio)', query: 'hip hinge dobradiça de quadril como fazer' },
       { name: 'Cat-camel', query: 'cat camel mobilidade coluna' },
@@ -82,7 +80,6 @@ export const DAYS = {
   'barra-c': {
     name: 'Barra C — Supino pesado',
     kind: 'lift',
-    generalWarmup: false,
     mobility: [
       { name: 'Rotação externa de ombro', query: 'rotação externa de ombro elástico aquecimento' },
     ],
@@ -96,7 +93,6 @@ export const DAYS = {
   'barra-d': {
     name: 'Barra D — Leve/acessórios',
     kind: 'lift',
-    generalWarmup: false,
     noPR: true,
     /* Dia leve: só o band pull-apart fixo, sem mobilidade extra. */
     slots: [
@@ -137,14 +133,17 @@ export const CARDIO_MODALITIES = {
 };
 
 export const FIXED_WARMUP = {
-  name: 'Band pull-apart 2x15 — todo dia de barra (protege o ombro)',
+  name: 'Band pull-apart 2x15',
   query: 'band pull apart como fazer',
 };
-export const GENERAL_WARMUP = 'Aquecimento geral opcional: 5-8min bike/esteira';
-export const RAMP_HINT =
-  'Rampa no 1º movimento: aproximações com reps decrescentes ' +
-  '(ex.: barra vazia x10 / 40x5 / 60x3 / 75x2 / 90x1) até a carga de trabalho.';
 export const MOBILITY_NOTE = 'Mobilidade dinâmica específica — nunca estático longo antes do treino.';
+
+/*
+ * Barra olímpica — base da rampa de aquecimento calculada (rampSets em
+ * progression.js). `rampFromFloor` no exercício = rampa sem barra vazia
+ * (terra: a barra precisa de anilhas para ficar na altura do chão).
+ */
+export const BAR_WEIGHT = 20;
 
 export const RPE_SCALE = [
   { rpe: 10, hint: 'falha' },

@@ -8,6 +8,7 @@ import {
   CYCLE_WEEKS,
   DELOAD_LOAD_FACTOR,
   FAIL_DELOAD_FACTOR,
+  BAR_WEIGHT,
 } from './program.js';
 
 /* ---------- e1RM ---------- */
@@ -81,6 +82,57 @@ export function formatTime(totalSeconds) {
 export function paceFor(meters, seconds, paceRef) {
   if (!meters || !seconds) return null;
   return (seconds / meters) * paceRef;
+}
+
+/* ---------- Descanso prescrito ---------- */
+/*
+ * Faixa de descanso do slot → segundos: '60s', '90s', '3-5min', '90s-2min',
+ * '60-90s'. Um lado sem sufixo herda a unidade do outro. Retorna
+ * { min, max } ou null se não der para interpretar.
+ */
+export function parseRestRange(str) {
+  const parts = String(str ?? '').trim().split('-');
+  if (!parts.length || parts.length > 2) return null;
+  const raw = parts.map((p) => {
+    const m = /^(\d+(?:[.,]\d+)?)\s*(s|min)?$/.exec(p.trim());
+    return m ? { n: parseFloat(m[1].replace(',', '.')), unit: m[2] ?? null } : null;
+  });
+  if (raw.some((r) => !r)) return null;
+  const fallback = raw.find((r) => r.unit)?.unit;
+  if (!fallback) return null;
+  const secs = raw.map((r) => Math.round(r.n * ((r.unit ?? fallback) === 'min' ? 60 : 1)));
+  const [min, max] = secs.length === 2 ? secs : [secs[0], secs[0]];
+  return min > 0 && max >= min ? { min, max } : null;
+}
+
+/* ---------- Rampa de aquecimento ---------- */
+/*
+ * Séries de aproximação até a carga de trabalho do dia, arredondadas em
+ * 2,5kg. Degraus a menos de 5kg do anterior ou colados no alvo caem fora,
+ * então alvo baixo (deload incluso) gera rampa curta naturalmente.
+ *  - normal:    barra vazia x10 e sobe pelos percentuais
+ *  - fromFloor: sem barra vazia — começa em ~50% com anilhas, mínimo 40kg
+ * Retorna [{ weight, reps }]; vazio se a carga não justificar rampa.
+ */
+export const RAMP_STEPS = [
+  { pct: 0.5, reps: 5 },
+  { pct: 0.7, reps: 3 },
+  { pct: 0.85, reps: 2 },
+  { pct: 0.93, reps: 1 },
+];
+export const RAMP_FLOOR_MIN = 40;
+
+export function rampSets(target, { fromFloor = false } = {}) {
+  const min = fromFloor ? RAMP_FLOOR_MIN : BAR_WEIGHT;
+  if (!target || target <= min) return [];
+  const out = fromFloor ? [] : [{ weight: BAR_WEIGHT, reps: 10 }];
+  for (const { pct, reps } of RAMP_STEPS) {
+    const w = Math.max(round2p5(target * pct), fromFloor ? RAMP_FLOOR_MIN : 0);
+    const prev = out[out.length - 1]?.weight ?? 0;
+    if ((out.length && w - prev < 5) || w > target - 2.5) continue;
+    out.push({ weight: w, reps });
+  }
+  return out;
 }
 
 /* ---------- Ciclo (semanas 1-4 + deload na 5) ---------- */

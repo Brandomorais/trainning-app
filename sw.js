@@ -7,7 +7,7 @@
  * CACHE_VERSION só precisa mudar em alterações estruturais (arquivo
  * renomeado/removido); edições normais chegam sozinhas via revalidação.
  */
-const CACHE_VERSION = 'treino-v2';
+const CACHE_VERSION = 'treino-v3'; // v3: rampa calculada + horário de volta
 
 const ASSETS = [
   './',
