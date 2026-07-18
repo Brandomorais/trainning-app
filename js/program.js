@@ -44,7 +44,13 @@ export const EXERCISES = {
   'dead-bug':          { name: 'Dead bug',          type: 'quality', query: 'dead bug como fazer' },
   'pallof':            { name: 'Pallof press',      type: 'quality', query: 'pallof press como fazer' },
   'remada-unilateral': { name: 'Remada unilateral', type: 'accessory', repRange: [10, 12], query: 'remada unilateral serrote técnica' },
-  'supino-inclinado':  { name: 'Supino inclinado',  type: 'accessory', repRange: [8, 12],  query: 'supino inclinado técnica' },
+  /*
+   * Supino inclinado: banco a ~30° — pico de EMG da porção clavicular
+   * (Rodríguez-Ridao 2020); 45°+ vira deltoide anterior, que a sexta já
+   * cobre no desenvolvimento. Halteres = equivalente se a barra estiver
+   * ocupada (progressão só salta mais: 2kg por mão).
+   */
+  'supino-inclinado':  { name: 'Supino inclinado',  type: 'accessory', repRange: [8, 12],  query: 'supino inclinado 30 graus técnica' },
   'leg-press':         { name: 'Leg press',         type: 'accessory', repRange: [10, 12], query: 'leg press técnica' },
   'bulgaro':           { name: 'Agachamento búlgaro', type: 'accessory', repRange: [8, 12], query: 'agachamento búlgaro técnica' },
   /*
@@ -121,7 +127,7 @@ export const DAYS = {
     noPR: true,
     /* Dia leve: só o band pull-apart fixo, sem mobilidade extra. */
     slots: [
-      { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min' },
+      { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min', note: '30°' },
       { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna' },
       { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s', note: 'sentado' },
       { exerciseId: 'triceps-overhead', sets: 3, reps: 12, rest: '60s' },

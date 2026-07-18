@@ -304,6 +304,21 @@ literatura recente de hipertrofia:
   os novos movimentos começam do zero de propósito: a carga do overhead é bem
   menor que a do pushdown, e sugestão herdada induziria a erro.
 
+### Supino inclinado: banco a ~30°
+
+Especificado em 18/07/2026. O
+[EMG em 5 inclinações (Rodríguez-Ridao 2020)](https://pubmed.ncbi.nlm.nih.gov/33049982/)
+mostra pico de ativação da **porção clavicular a 30°**; média/baixa ativam
+mais a 0°, e de 45° pra cima quem assume é o **deltoide anterior** — banco
+alto vira desenvolvimento disfarçado (redundante: a sexta já tem
+desenvolvimento). O efeito é regional de verdade, não só EMG: no único
+longitudinal comparando grupos, quem só fez inclinado
+[cresceu mais o peito superior](https://www.strongerbyscience.com/regional-hypertrophy/)
+(Chaves et al.). Como o reto aparece 3x/semana (média/baixa cobertas), o
+inclinado da sexta é o único estímulo dedicado à clavicular — slot bem
+posicionado, só precisava do ângulo. Halteres = equivalente pleno se a barra
+estiver ocupada.
+
 ### Desenvolvimento: sentado com halteres (máquina equivale)
 
 Especificado em 18/07/2026. Para hipertrofia, a
@@ -355,3 +370,5 @@ ombro — só entraria se overhead virasse meta própria.
 - [Cable curl e ângulo de extensão do ombro (2026)](https://pmc.ncbi.nlm.nih.gov/articles/PMC13076143/)
 - [Haugen et al. — Free-weight vs machine: força, hipertrofia e salto (meta-análise 2023)](https://pubmed.ncbi.nlm.nih.gov/37582807/)
 - [Saeterbakken & Fimland — posição do corpo e implemento no shoulder press (EMG)](https://pubmed.ncbi.nlm.nih.gov/23096062/)
+- [Rodríguez-Ridao et al. — EMG do supino em 5 inclinações de banco (2020)](https://pubmed.ncbi.nlm.nih.gov/33049982/)
+- [Stronger by Science — Is Regional Hypertrophy Predictable?](https://www.strongerbyscience.com/regional-hypertrophy/)
