@@ -185,6 +185,34 @@ só o band pull-apart. Como a rampa faz a maior parte da preparação específic
 os itens cortados (quadril isolado, torácica, ativação de glúteo) viram
 ferramenta de exceção: voltam se aparecer limitação recorrente.
 
+### 8.1 Esquema da rampa (18/07/2026)
+
+O app passou a calcular a rampa dos dias pesados em um card próprio:
+**vazia×10 · 50%×5 · 70%×3 · 85%×2 · 93%×1** da carga de trabalho, arredondado
+em 2,5kg (terra sem barra vazia — começa em ~50% com anilhas, mín. 40kg, pela
+altura da barra). A linha "aquecimento geral opcional (bike/esteira)" saiu da
+tela para economizar espaço — o *Raise* segue valendo como hábito, só não
+ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
+
+- **Pausas**: curtas entre as aproximações (~1min, o tempo de trocar anilha) e
+  **2-3min antes da 1ª série de trabalho**. É o protocolo do
+  [estudo de referência](https://pmc.ncbi.nlm.nih.gov/articles/PMC7558980/)
+  (1min entre séries de aquecimento, 3min antes das válidas), e a lógica de
+  [potencialização pós-ativação](https://pmc.ncbi.nlm.nih.gov/articles/PMC5260521/)
+  reforça: tocar carga alta antes do trabalho só ajuda se a fadiga dela
+  dissipar antes da série válida.
+- **Honestidade sobre o volume da rampa**: a evidência direta mostra que
+  [1-2 séries específicas, com pelo menos uma pesada (80-90%), já otimizam](https://pmc.ncbi.nlm.nih.gov/articles/PMC7558980/)
+  o desempenho — e que só carga leve (40%) é o pior protocolo. As
+  [revisões](https://www.intechopen.com/chapters/75109)
+  ([sistemática de 2021](https://www.researchgate.net/publication/354354269_The_effect_of_warm-up_in_resistance_training_and_strength_performance_a_systematic_review))
+  não fecham consenso além de "progressivo, terminando pesado, poucas séries".
+  Os estudos usaram trabalho de 6 reps @80%; ninguém testou rampa para séries
+  quase máximas como as do programa (@RPE8, ~85-90% 1RM). Os degraus de 85% e
+  93% ficam pela justificativa prática — ensaio técnico e não saltar 15-20kg
+  às cegas — com custo de fadiga desprezível. Se a sessão estiver longa, a
+  literatura autoriza enxugar a rampa antes de cortar qualquer série válida.
+
 ---
 
 ## Ajustes aplicados em 15/07/2026 (commits `defb70c` e `afde9c6`)
@@ -241,3 +269,7 @@ ferramenta de exceção: voltam se aparecer limitação recorrente.
 - [Barbell Medicine — Concurrent Training](https://www.barbellmedicine.com/blog/concurrent-training-and-the-interference-effect/)
 - [RP Strength — Volume Landmarks (MEV/MAV/MRV)](https://rpstrength.com/blogs/articles/training-volume-landmarks-muscle-growth)
 - [Guias práticos de acessórios: WeightLift Calculator](https://weightliftcalculator.com/blog/accessory-exercises-for-powerlifting/) · [Cerberus Strength](https://cerberus-strength.us/blogs/training-tips/accessory-exercise-selection-for-powerlifting-part-1)
+- [Ribeiro et al. — The Role of Specific Warm-up during Bench Press and Squat (protocolos e pausas da rampa)](https://pmc.ncbi.nlm.nih.gov/articles/PMC7558980/)
+- [Optimizing post activation potentiation (janela de potencialização vs fadiga)](https://pmc.ncbi.nlm.nih.gov/articles/PMC5260521/)
+- [Neves et al. — Warming-Up for Resistance Training: Narrative Review](https://www.intechopen.com/chapters/75109)
+- [Revisão sistemática — warm-up e desempenho de força (2021)](https://www.researchgate.net/publication/354354269_The_effect_of_warm-up_in_resistance_training_and_strength_performance_a_systematic_review)

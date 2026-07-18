@@ -64,6 +64,12 @@ agacho profundo c/ peso corporal 30-45s + tornozelo · **Ter**: dobradiça sem
 carga + cat-camel · **Qui**: rotação externa de ombro · **Sex**: só o band
 pull-apart. Nada de estático longo antes do treino.
 
+A rampa dos dias pesados é calculada pelo app (card próprio na tela do
+treino): **vazia×10 · 50%×5 · 70%×3 · 85%×2 · 93%×1** da carga de trabalho —
+terra sem barra vazia (começa em ~50% com anilhas, mín. 40kg). Pausas curtas
+entre aproximações (~1min) e 2-3min antes da 1ª série válida — fontes em
+[`docs/validacao-programa.md`](docs/validacao-programa.md) (§8.1).
+
 Terra técnico e agacho volume progridem **separados** dos dias pesados (a
 sugestão de carga é por dia do programa).
 
