@@ -11,7 +11,17 @@ import {
   RPE_SCALE,
   youtubeURL,
 } from '../program.js';
-import { getLogs, addLog, deleteLog, getCycle, getCardio, addCardio, deleteCardio } from '../db.js';
+import {
+  getLogs,
+  addLog,
+  deleteLog,
+  getCycle,
+  getCardio,
+  addCardio,
+  deleteCardio,
+  getSettings,
+  setSettings,
+} from '../db.js';
 import {
   toISODate,
   formatDateLong,
@@ -23,7 +33,9 @@ import {
   parseRestRange,
   rampSets,
   RAMP_STEPS,
-  RAMP_FLOOR_MIN,
+  rampFloorMin,
+  displayWeight,
+  lbToKg,
 } from '../progression.js';
 
 const esc = (s) =>
@@ -62,11 +74,15 @@ function rpeRefHTML() {
   return `<p class="rpe-ref">RPE: ${parts}</p>`;
 }
 
-function setChips(todaysSets) {
+/* Peso do chip na unidade do exercício ('lb' ganha sufixo; kg fica limpo). */
+const chipWeight = (kg, unit) =>
+  kg === 0 ? 'PC' : unit === 'lb' ? `${displayWeight(kg, 'lb')}lb` : String(displayWeight(kg, 'kg'));
+
+function setChips(todaysSets, unit) {
   if (!todaysSets.length) return '';
   const chips = todaysSets
     .map(
-      (s) => `<span class="set-chip">S${s.setNumber} · ${s.weight === 0 ? 'PC' : s.weight}×${s.reps}${s.rpe ? ` @${s.rpe}` : ''}
+      (s) => `<span class="set-chip">S${s.setNumber} · ${chipWeight(s.weight, unit)}×${s.reps}${s.rpe ? ` @${s.rpe}` : ''}
         <button class="del-set" data-id="${s.id}" aria-label="Apagar série">✕</button></span>`
     )
     .join('');
@@ -82,16 +98,22 @@ function rampPctText(fromFloor) {
   return (fromFloor ? [] : ['vazia×10']).concat(parts).join(' · ');
 }
 
-/** Linha calculada da rampa para a carga digitada na calculadora. */
-function rampCalcText(slot, weight) {
+/** Linha calculada da rampa para a carga digitada, na unidade ativa. */
+function rampCalcText(slot, weight, unit) {
   const fromFloor = Boolean(EXERCISES[slot.exerciseId].rampFromFloor);
-  const steps = rampSets(weight, { fromFloor });
+  const steps = rampSets(weight, { fromFloor, unit });
   if (!steps.length) return 'Informe a carga de trabalho para calcular.';
   const parts = steps.map((s, i) =>
     !fromFloor && i === 0 ? `vazia×${s.reps}` : `${fmtW(s.weight)}×${s.reps}`
   );
-  return `${parts.join(' · ')} → ${fmtW(weight)}kg`;
+  return `${parts.join(' · ')} → ${fmtW(weight)}${unit}`;
 }
+
+/** Toggle kg|lb — mesma preferência do exercício (settings.units). */
+const unitToggleHTML = (unit) => `
+  <span class="unit-toggle" role="group" aria-label="Unidade do exercício">
+    <button class="unit-btn${unit === 'kg' ? ' selected' : ''}" data-unit="kg">kg</button><button class="unit-btn${unit === 'lb' ? ' selected' : ''}" data-unit="lb">lb</button>
+  </span>`;
 
 /*
  * Um card por slot com `ramp: true`, logo após o aquecimento: percentuais
@@ -105,16 +127,21 @@ function rampCardsHTML(day, ctx) {
     .map((slot) => {
       const ex = EXERCISES[slot.exerciseId];
       const fromFloor = Boolean(ex.rampFromFloor);
-      const pref = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey).weight ?? '';
+      const unit = ctx.units[slot.exerciseId] ?? 'kg';
+      const advKg = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey, unit).weight;
+      const pref = advKg == null ? '' : displayWeight(advKg, unit);
       return `
         <section class="card ramp-card" data-ramp-ex="${slot.exerciseId}">
           <h2>Rampa — ${ex.name}</h2>
           <p class="ramp-pct">${rampPctText(fromFloor)}</p>
-          ${fromFloor ? `<p class="muted small">Com anilhas desde a 1ª aproximação (mín. ${RAMP_FLOOR_MIN}kg) — sem barra vazia.</p>` : ''}
+          ${fromFloor ? `<p class="muted small">Com anilhas desde a 1ª aproximação (mín. ${rampFloorMin(unit)}${unit}) — sem barra vazia.</p>` : ''}
           <p class="muted small">Pausas: ~1min entre aproximações (troca de anilha) · 2-3min antes da 1ª série de trabalho.</p>
-          <label class="field-label">Carga de trabalho (kg)</label>
-          <input class="notes-input in-ramp-target" type="text" inputmode="decimal" value="${pref}" placeholder="kg">
-          <p class="ramp-line">${rampCalcText(slot, parseNum(pref))}</p>
+          <div class="unit-row">
+            <span class="field-label">Carga de trabalho (${unit})</span>
+            ${unitToggleHTML(unit)}
+          </div>
+          <input class="notes-input in-ramp-target" type="text" inputmode="decimal" value="${pref}" placeholder="${unit}">
+          <p class="ramp-line">${rampCalcText(slot, parseNum(pref), unit)}</p>
         </section>`;
     })
     .join('');
@@ -140,13 +167,16 @@ function slotCard(slot, ctx) {
     .filter((l) => l.date === ctx.date && l.exerciseId === slot.exerciseId)
     .sort((a, b) => a.createdAt - b.createdAt);
 
+  const unit = ctx.units[slot.exerciseId] ?? 'kg';
   const effSets = ctx.deload ? Math.max(1, Math.ceil(slot.sets / 2)) : slot.sets;
-  const adv = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey);
+  const adv = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey, unit);
   const hintCls =
     adv.status === 'estagnado' ? ' hint-bad' : adv.status === 'atencao' ? ' hint-warn' : '';
   const lastToday = todays[todays.length - 1];
-  const prefWeight = lastToday ? lastToday.weight : adv.weight ?? '';
+  const prefKg = lastToday ? lastToday.weight : adv.weight;
+  const prefWeight = prefKg == null ? '' : displayWeight(prefKg, unit);
   const prefReps = slot.reps ?? 10;
+  const step = unit === 'lb' ? 5 : 2.5;
   const done = todays.length >= effSets;
 
   const prescription =
@@ -166,19 +196,22 @@ function slotCard(slot, ctx) {
     <section class="card exercise" data-ex="${slot.exerciseId}">
       <div class="ex-head">
         <h2>${ex.name}
-          <a class="video-link-inline" href="${youtubeURL(ex)}" target="_blank" rel="noopener" aria-label="Ver técnica no YouTube">▶</a>
+          <a class="video-link-inline" href="${youtubeURL(slot.query || slot.url ? slot : ex)}" target="_blank" rel="noopener" aria-label="Ver técnica no YouTube">▶</a>
           ${done ? '<span class="done-mark">✓</span>' : ''}</h2>
         <span class="prescription">${prescription}</span>
       </div>
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
-      ${setChips(todays)}
+      ${setChips(todays, unit)}
       ${returnLineHTML(slot, ctx)}
-      <label class="field-label">Carga (kg)</label>
+      <div class="unit-row">
+        <span class="field-label">Carga (${unit})</span>
+        ${unitToggleHTML(unit)}
+      </div>
       <div class="stepper">
-        <button class="step-btn" data-delta="-2.5" aria-label="Menos 2,5 kg">−</button>
-        <input class="in-weight" type="text" inputmode="decimal" value="${prefWeight}" placeholder="kg">
-        <button class="step-btn" data-delta="2.5" aria-label="Mais 2,5 kg">+</button>
+        <button class="step-btn" data-delta="-${step}" aria-label="Menos ${step} ${unit}">−</button>
+        <input class="in-weight" type="text" inputmode="decimal" value="${prefWeight}" placeholder="${unit}">
+        <button class="step-btn" data-delta="${step}" aria-label="Mais ${step} ${unit}">+</button>
       </div>
       <label class="field-label">Reps</label>
       <div class="stepper">
@@ -275,7 +308,13 @@ export async function render(el, dayKey, logDate) {
 
   const today = toISODate();
   const date = logDate && logDate <= today ? logDate : today;
-  const [logs, cycle, cardio] = await Promise.all([getLogs(), getCycle(), getCardio()]);
+  const [logs, cycle, cardio, settings] = await Promise.all([
+    getLogs(),
+    getCycle(),
+    getCardio(),
+    getSettings(),
+  ]);
+  const units = settings.units ?? {};
   const wk = cycleWeek(cycle, date);
   const deload = wk?.deload ?? false;
   const lastLog =
@@ -284,7 +323,7 @@ export async function render(el, dayKey, logDate) {
           .filter((l) => l.date === date && l.dayKey === dayKey)
           .reduce((a, b) => (!a || b.createdAt > a.createdAt ? b : a), null)
       : null;
-  const ctx = { logs, cardio, date, deload, dayKey, lastLog };
+  const ctx = { logs, cardio, date, deload, dayKey, lastLog, units };
 
   let body = '';
   if (day.kind === 'lift') {
@@ -356,7 +395,8 @@ export async function render(el, dayKey, logDate) {
     if (e.target.classList.contains('in-ramp-target')) {
       const card = e.target.closest('.ramp-card');
       const slot = day.slots.find((s) => s.exerciseId === card.dataset.rampEx && s.ramp);
-      if (slot) card.querySelector('.ramp-line').textContent = rampCalcText(slot, parseNum(e.target.value));
+      const unit = units[card.dataset.rampEx] ?? 'kg';
+      if (slot) card.querySelector('.ramp-line').textContent = rampCalcText(slot, parseNum(e.target.value), unit);
     }
   };
 
@@ -367,6 +407,18 @@ export async function render(el, dayKey, logDate) {
       const step = parseFloat(stepBtn.dataset.delta);
       const next = Math.max(0, (parseNum(input.value) ?? 0) + step);
       input.value = String(Math.round(next * 100) / 100);
+      return;
+    }
+
+    const unitBtn = e.target.closest('.unit-btn');
+    if (unitBtn) {
+      // O toggle existe no card do exercício e no da rampa — mesma preferência.
+      const exId =
+        unitBtn.closest('.exercise')?.dataset.ex ?? unitBtn.closest('.ramp-card')?.dataset.rampEx;
+      if (exId && (units[exId] ?? 'kg') !== unitBtn.dataset.unit) {
+        await setSettings({ ...settings, units: { ...units, [exId]: unitBtn.dataset.unit } });
+        await rerender();
+      }
       return;
     }
 
@@ -416,10 +468,13 @@ export async function render(el, dayKey, logDate) {
     const logBtn = e.target.closest('.log-btn');
     if (logBtn) {
       const card = logBtn.closest('.exercise');
-      const weight = parseNum(card.querySelector('.in-weight').value);
+      const unit = units[card.dataset.ex] ?? 'kg';
+      let weight = parseNum(card.querySelector('.in-weight').value);
       const reps = parseNum(card.querySelector('.in-reps').value);
       if (weight === null || weight < 0) { alert('Informe a carga (use 0 para peso corporal).'); return; }
       if (!reps || reps < 1) { alert('Informe as reps.'); return; }
+      // Gravação sempre em kg — lb converte na borda.
+      if (unit === 'lb' && weight > 0) weight = Math.round(lbToKg(weight) * 1000) / 1000;
 
       const selectedRpe = card.querySelector('.rpe-btn.selected');
       const rpe = selectedRpe && selectedRpe.dataset.rpe !== '' ? parseFloat(selectedRpe.dataset.rpe) : null;

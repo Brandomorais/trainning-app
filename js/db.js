@@ -5,10 +5,10 @@
  */
 import { get, set, del } from './vendor/idb-keyval.js';
 
-export const SCHEMA_VERSION = 2; // v2: + cardio (backups v1 seguem importáveis)
+export const SCHEMA_VERSION = 3; // v3: + settings (unidade por exercício); backups v1/v2 seguem importáveis
 const APP_ID = 'treino-powerlifting';
 
-const KEYS = { logs: 'logs', cardio: 'cardio', cycle: 'cycle', selectedSession: 'selectedSession' };
+const KEYS = { logs: 'logs', cardio: 'cardio', cycle: 'cycle', selectedSession: 'selectedSession', settings: 'settings' };
 
 export function newId() {
   return (crypto.randomUUID)
@@ -90,6 +90,17 @@ export async function setCycle(cycle) {
   await set(KEYS.cycle, cycle);
 }
 
+/* ---------- Preferências (unidade por exercício etc.) ---------- */
+/* Pesos são sempre GRAVADOS em kg; `units[exerciseId] = 'lb'` só muda a
+ * lente de entrada/exibição daquele exercício (máquinas em libras). */
+export async function getSettings() {
+  return (await get(KEYS.settings)) ?? { units: {} };
+}
+
+export async function setSettings(settings) {
+  await set(KEYS.settings, settings);
+}
+
 /* ---------- Sessão escolhida no dia (expira quando a data muda) ---------- */
 export async function getSelectedSession() {
   return (await get(KEYS.selectedSession)) ?? null;
@@ -108,6 +119,7 @@ export async function exportData() {
     cycle: await getCycle(),
     logs: await getLogs(),
     cardio: await getCardio(),
+    settings: await getSettings(),
   };
 }
 
@@ -127,6 +139,7 @@ export function validateBackup(data) {
 export async function importData(data) {
   await saveLogs(data.logs);
   await saveCardio(data.cardio ?? []); // backups v1 entram sem cardio
+  await setSettings(data.settings ?? { units: {} }); // backups v1/v2: tudo kg
   if (data.cycle && data.cycle.startDate) await setCycle(data.cycle);
 }
 
@@ -135,4 +148,5 @@ export async function wipeAll() {
   await del(KEYS.cardio);
   await del(KEYS.cycle);
   await del(KEYS.selectedSession);
+  await del(KEYS.settings);
 }

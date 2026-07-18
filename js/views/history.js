@@ -3,12 +3,13 @@
  * modalidade aeróbica, gráficos + lista de sessões.
  */
 import { EXERCISES, DAYS, CARDIO_MODALITIES } from '../program.js';
-import { getLogs, getCardio } from '../db.js';
+import { getLogs, getCardio, getSettings } from '../db.js';
 import {
   sessionsFor,
   bestE1RM,
   epley,
-  fmtKg,
+  fmtWeight,
+  displayWeight,
   formatDateShort,
   formatDateLong,
   formatTime,
@@ -70,12 +71,13 @@ function resumoHTML(logs) {
 }
 
 /* ---------- Detalhe de exercício de força ---------- */
-function strengthDetail(logs) {
+/* Dados são kg; `unit` = lente de exibição do exercício (máquinas em lb). */
+function strengthDetail(logs, unit) {
   const sessions = sessionsFor(logs, selectedEx);
 
   const points = sessions.map((s) => ({
     label: formatDateShort(s.date),
-    value: Math.round(bestE1RM(s.sets) * 10) / 10,
+    value: Math.round(displayWeight(bestE1RM(s.sets), unit) * 10) / 10,
     deload: s.sets.some((x) => x.isDeload),
   }));
 
@@ -112,8 +114,8 @@ function strengthDetail(logs) {
       const isDeload = s.sets.some((x) => x.isDeload);
       const rows = s.sets
         .map((x) => {
-          const label = `${x.weight === 0 ? 'PC' : fmt1(x.weight)} × ${x.reps}${x.rpe ? ` @RPE${x.rpe}` : ''}`;
-          const e = x.weight > 0 ? `<span class="e1rm">e1RM ${fmt1(epley(x.weight, x.reps))}</span>` : '';
+          const label = `${x.weight === 0 ? 'PC' : fmt1(displayWeight(x.weight, unit))} × ${x.reps}${x.rpe ? ` @RPE${x.rpe}` : ''}`;
+          const e = x.weight > 0 ? `<span class="e1rm">e1RM ${fmt1(displayWeight(epley(x.weight, x.reps), unit))}</span>` : '';
           const note = x.notes ? `<span class="note">${esc(x.notes)}</span>` : '';
           return `<li><span>${label}</span>${note || e}</li>`;
         })
@@ -128,14 +130,14 @@ function strengthDetail(logs) {
 
   const html = `
     <div class="stat-row">
-      <div class="stat">Melhor e1RM<b>${fmt1(bestOverall)} kg</b></div>
-      <div class="stat">Maior carga<b>${fmtKg(maxWeight)}</b></div>
+      <div class="stat">Melhor e1RM<b>${fmt1(bestOverall)} ${unit}</b></div>
+      <div class="stat">Maior carga<b>${fmtWeight(maxWeight, unit)}</b></div>
       <div class="stat">Sessões<b>${sessions.length}</b></div>
     </div>
     ${trendHTML}
     <section class="card chart-card">
       <h2>e1RM por sessão — ${EXERCISES[selectedEx].name}</h2>
-      <p class="chart-sub">Epley: carga × (1 + reps/30) · melhor série do dia · ○ = deload</p>
+      <p class="chart-sub">Epley: carga × (1 + reps/30) · melhor série do dia · ${unit} · ○ = deload</p>
       <div class="chart-wrap" id="detail-chart"></div>
     </section>
     ${sessionList}`;
@@ -228,7 +230,8 @@ function cardioDetail(cardio, modality) {
 
 /* ---------- Tela ---------- */
 export async function render(el) {
-  const [logs, cardio] = await Promise.all([getLogs(), getCardio()]);
+  const [logs, cardio, settings] = await Promise.all([getLogs(), getCardio(), getSettings()]);
+  const units = settings.units ?? {};
 
   const strengthIds = Object.keys(EXERCISES).filter((id) => logs.some((l) => l.exerciseId === id));
   const cardioIds = Object.keys(CARDIO_MODALITIES)
@@ -257,7 +260,7 @@ export async function render(el) {
 
   const detail = selectedEx.startsWith('cardio:')
     ? cardioDetail(cardio, selectedEx.slice('cardio:'.length))
-    : strengthDetail(logs);
+    : strengthDetail(logs, units[selectedEx] ?? 'kg');
 
   el.innerHTML = `
     <header class="page-head"><h1>Histórico</h1></header>

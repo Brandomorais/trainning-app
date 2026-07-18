@@ -242,6 +242,20 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
 /* ---------- Formulário de série ---------- */
 .field-label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 2px 6px; }
 
+/* Unidade por exercício (kg | lb) — máquinas em libras */
+.unit-row { display: flex; align-items: center; justify-content: space-between; margin: 10px 2px 6px; }
+.unit-row .field-label { margin: 0; }
+.unit-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.unit-btn {
+  background: var(--card-2);
+  color: var(--muted);
+  border: none;
+  font-size: 0.8rem;
+  padding: 7px 14px;
+  line-height: 1;
+}
+.unit-btn.selected { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+
 .stepper { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; height: 56px; }
 .stepper button {
   font-size: 1.5rem;

@@ -9,6 +9,7 @@ import {
   DELOAD_LOAD_FACTOR,
   FAIL_DELOAD_FACTOR,
   BAR_WEIGHT,
+  BAR_WEIGHT_LB,
 } from './program.js';
 
 /* ---------- e1RM ---------- */
@@ -44,9 +45,29 @@ export function formatDateShort(iso) {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
-export function fmtKg(n) {
-  if (n === 0) return 'PC'; // peso corporal
-  return `${Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg`;
+/* ---------- Unidades (kg canônico; lb só entrada/exibição) ---------- */
+/*
+ * Todo peso é GRAVADO em kg. Exercícios de máquina/polia marcados como 'lb'
+ * (settings.units) convertem na borda: digitação lb → kg ao salvar, kg →
+ * lb ao exibir. Trocar a unidade depois não corrompe nada — só muda a lente.
+ */
+export const LB_PER_KG = 2.20462262;
+export const kgToLb = (kg) => kg * LB_PER_KG;
+export const lbToKg = (lb) => lb / LB_PER_KG;
+
+/** kg → número exibível na unidade (lb arredondada a 0,5; kg a 0,01). */
+export function displayWeight(kg, unit = 'kg') {
+  return unit === 'lb' ? Math.round(kgToLb(kg) * 2) / 2 : Math.round(kg * 100) / 100;
+}
+
+export function fmtWeight(kg, unit = 'kg') {
+  if (kg === 0) return 'PC'; // peso corporal
+  return `${displayWeight(kg, unit).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} ${unit}`;
+}
+
+/** Arredonda uma sugestão (em kg) para a grade da unidade: 2,5kg ou 5lb. */
+export function roundToUnit(kg, unit = 'kg') {
+  return unit === 'lb' ? lbToKg(Math.round(kgToLb(kg) / 5) * 5) : round2p5(kg);
 }
 
 /* ---------- Tempo e pace (aeróbico) ---------- */
@@ -107,11 +128,14 @@ export function parseRestRange(str) {
 
 /* ---------- Rampa de aquecimento ---------- */
 /*
- * Séries de aproximação até a carga de trabalho do dia, arredondadas em
- * 2,5kg. Degraus a menos de 5kg do anterior ou colados no alvo caem fora,
- * então alvo baixo (deload incluso) gera rampa curta naturalmente.
+ * Séries de aproximação até a carga de trabalho do dia, TUDO na unidade
+ * ativa (calculadora não grava nada): grade de 2,5kg/barra 20kg, ou grade
+ * de 5lb/barra 45lb em academia de libras. Degraus a menos de 2 grades do
+ * anterior ou colados no alvo caem fora, então alvo baixo (deload incluso)
+ * gera rampa curta naturalmente.
  *  - normal:    barra vazia x10 e sobe pelos percentuais
- *  - fromFloor: sem barra vazia — começa em ~50% com anilhas, mínimo 40kg
+ *  - fromFloor: sem barra vazia — começa em ~50% com anilhas, mínimo
+ *               40kg/90lb (altura da barra no chão)
  * Retorna [{ weight, reps }]; vazio se a carga não justificar rampa.
  */
 export const RAMP_STEPS = [
@@ -120,16 +144,19 @@ export const RAMP_STEPS = [
   { pct: 0.85, reps: 2 },
   { pct: 0.93, reps: 1 },
 ];
-export const RAMP_FLOOR_MIN = 40;
+export const rampFloorMin = (unit = 'kg') => (unit === 'lb' ? 90 : 40);
 
-export function rampSets(target, { fromFloor = false } = {}) {
-  const min = fromFloor ? RAMP_FLOOR_MIN : BAR_WEIGHT;
+export function rampSets(target, { fromFloor = false, unit = 'kg' } = {}) {
+  const grid = unit === 'lb' ? 5 : 2.5;
+  const bar = unit === 'lb' ? BAR_WEIGHT_LB : BAR_WEIGHT;
+  const floorMin = rampFloorMin(unit);
+  const min = fromFloor ? floorMin : bar;
   if (!target || target <= min) return [];
-  const out = fromFloor ? [] : [{ weight: BAR_WEIGHT, reps: 10 }];
+  const out = fromFloor ? [] : [{ weight: bar, reps: 10 }];
   for (const { pct, reps } of RAMP_STEPS) {
-    const w = Math.max(round2p5(target * pct), fromFloor ? RAMP_FLOOR_MIN : 0);
+    const w = Math.max(Math.round((target * pct) / grid) * grid, fromFloor ? floorMin : 0);
     const prev = out[out.length - 1]?.weight ?? 0;
-    if ((out.length && w - prev < 5) || w > target - 2.5) continue;
+    if ((out.length && w - prev < 2 * grid) || w > target - grid) continue;
     out.push({ weight: w, reps });
   }
   return out;
@@ -275,12 +302,13 @@ export function trendSignals(trend, slot) {
 
 /*
  * Sugestão para um slot do treino, olhando o histórico ANTES de `dateISO`.
- * Retorna { text, weight, status } — weight (ou null) pré-preenche o
+ * Retorna { text, weight, status } — weight (kg, ou null) pré-preenche o
  * formulário; status ('ok' | 'atencao' | 'estagnado') dirige o visual do hint.
  * `dayKey` restringe histórico e tendência à mesma prescrição: terra pesado
  * (Barra B) e terra técnico (Barra C) progridem separados, idem agacho A/C.
+ * `unit` só muda textos e a grade de arredondamento — a conta é sempre em kg.
  */
-export function advise(slot, logs, dateISO, deload, dayKey = null) {
+export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') {
   const ex = EXERCISES[slot.exerciseId];
   const past = sessionsFor(logs, slot.exerciseId)
     .map((s) => (dayKey ? { ...s, sets: s.sets.filter((x) => x.dayKey === dayKey) } : s))
@@ -303,9 +331,9 @@ export function advise(slot, logs, dateISO, deload, dayKey = null) {
   const lastTop = topWeight(last.sets);
 
   if (deload) {
-    const w = round2p5(lastTop * DELOAD_LOAD_FACTOR);
+    const w = roundToUnit(lastTop * DELOAD_LOAD_FACTOR, unit);
     return {
-      text: `Deload: ~${fmtKg(w)} (60% de ${fmtKg(lastTop)}), metade das séries, sem RPE alto.`,
+      text: `Deload: ~${fmtWeight(w, unit)} (60% de ${fmtWeight(lastTop, unit)}), metade das séries, sem RPE alto.`,
       weight: w,
     };
   }
@@ -315,9 +343,9 @@ export function advise(slot, logs, dateISO, deload, dayKey = null) {
     const failedTwice =
       prev && sessionFailed(last, slot.reps) && sessionFailed(prev, slot.reps);
     if (failedTwice) {
-      const w = round2p5(lastTop * FAIL_DELOAD_FACTOR);
+      const w = roundToUnit(lastTop * FAIL_DELOAD_FACTOR, unit);
       return {
-        text: `Falhou 2 semanas seguidas → deload 10%: volte para ~${fmtKg(w)} e reconstrua.`,
+        text: `Falhou 2 semanas seguidas → deload 10%: volte para ~${fmtWeight(w, unit)} e reconstrua.`,
         weight: w,
         status: 'estagnado',
       };
@@ -325,9 +353,9 @@ export function advise(slot, logs, dateISO, deload, dayKey = null) {
 
     const trend = analyzeTrend(slot, logs, dayKey, dateISO);
     if (trend.status === 'estagnado') {
-      const w = round2p5(lastTop * FAIL_DELOAD_FACTOR);
+      const w = roundToUnit(lastTop * FAIL_DELOAD_FACTOR, unit);
       return {
-        text: `Estagnação: ${trendSignals(trend, slot).join(' e ')}. Deload antecipado: volte para ~${fmtKg(w)} (−10%) e reconstrua.`,
+        text: `Estagnação: ${trendSignals(trend, slot).join(' e ')}. Deload antecipado: volte para ~${fmtWeight(w, unit)} (−10%) e reconstrua.`,
         weight: w,
         status: 'estagnado',
       };
@@ -335,36 +363,38 @@ export function advise(slot, logs, dateISO, deload, dayKey = null) {
     if (trend.status === 'atencao') {
       const [signal] = trendSignals(trend, slot);
       return {
-        text: `${signal} — segure ${fmtKg(lastTop)} e busque um RPE mais limpo antes de subir.`,
+        text: `${signal} — segure ${fmtWeight(lastTop, unit)} e busque um RPE mais limpo antes de subir.`,
         weight: lastTop,
         status: 'atencao',
       };
     }
 
-    const w = lastTop + ex.increment;
+    // Incremento na grade da unidade: 5/2,5kg viram 10/5lb em academia de libras.
+    const incLb = ex.increment === 2.5 ? 5 : 10;
+    const w = lastTop + (unit === 'lb' ? lbToKg(incLb) : ex.increment);
     return {
       text:
-        `Última: ${fmtKg(lastTop)}. Sugestão: ${fmtKg(w)} (+${ex.increment} kg)` +
+        `Última: ${fmtWeight(lastTop, unit)}. Sugestão: ${fmtWeight(w, unit)} (+${unit === 'lb' ? `${incLb} lb` : `${ex.increment} kg`})` +
         (slot.rpe ? ` — só se o RPE se manteve ≤ ${slot.rpe}.` : '.'),
       weight: w,
     };
   }
 
-  // Acessório composto: progressão dupla.
+  // Acessório composto: progressão dupla (incremento na grade da unidade).
   const [lo, hi] = ex.repRange ?? [slot.reps, slot.reps];
   const setsAtTop = last.sets.filter((s) => s.weight === lastTop);
   const allAtCeiling =
     setsAtTop.length >= (slot.sets ?? 1) && setsAtTop.every((s) => s.reps >= hi);
 
   if (allAtCeiling) {
-    const w = lastTop + 2.5;
+    const w = lastTop + (unit === 'lb' ? lbToKg(5) : 2.5);
     return {
-      text: `Fechou ${slot.sets}x${hi} com ${fmtKg(lastTop)} → suba para ${fmtKg(w)} e volte a ~${lo} reps.`,
+      text: `Fechou ${slot.sets}x${hi} com ${fmtWeight(lastTop, unit)} → suba para ${fmtWeight(w, unit)} e volte a ~${lo} reps.`,
       weight: w,
     };
   }
   return {
-    text: `Mantenha ${fmtKg(lastTop)} e some reps até ${slot.sets}x${hi}; só então suba a carga.`,
+    text: `Mantenha ${fmtWeight(lastTop, unit)} e some reps até ${slot.sets}x${hi}; só então suba a carga.`,
     weight: lastTop,
   };
 }

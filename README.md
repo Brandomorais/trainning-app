@@ -50,9 +50,9 @@ alto). Ajustado em jul/2026 com base na literatura — pesquisa e fontes em
 
 | Dia | Sessão | Prescrição |
 |---|---|---|
-| **Dom** | Barra A — Agacho pesado | Agacho 4x4 @8 (rampa) · Supino 4x6 @7 · Remada curvada 4x8 · Stiff 3x10 · Core 3x |
+| **Dom** | Barra A — Agacho pesado | Agacho 4x4 @8 (rampa) · Supino 4x6 @7 · Remada curvada 4x8 · Stiff 3x10 · Dead bug 3x10/lado |
 | **Seg** | Aeróbico | Natação ou corrida, leve/moderado (distância + tempo) |
-| **Ter** | Barra B — Terra pesado | Terra 4x3 @8 (rampa) · Supino fechado 3x8 leve · Puxada 4x10 · Core 3x |
+| **Ter** | Barra B — Terra pesado | Terra 4x3 @8 (rampa) · Supino fechado 3x8 leve · Puxada 4x10 · Pallof press 3x10/lado |
 | **Qua** | Aeróbico | Natação ou corrida, leve/moderado |
 | **Qui** | Barra C — Supino pesado | Supino 5x3 @8 (rampa) · Agacho 4x6 @7 volume · Terra 2x3 @6 técnico (~70% da terça) · Remada unilateral 3x10 |
 | **Sex** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 4x8 · Búlgaro 3x10/perna · Desenvolvimento 3x8 · Tríceps/Bíceps/Mesa flexora 3x12 |
@@ -72,6 +72,13 @@ entre aproximações (~1min) e 2-3min antes da 1ª série válida — fontes em
 
 Terra técnico e agacho volume progridem **separados** dos dias pesados (a
 sugestão de carga é por dia do programa).
+
+Máquinas em libras: cada exercício tem um toggle **kg | lb** no card da tela
+de treino (útil pra polia/máquinas marcadas em lb). Os pesos são sempre
+**gravados em kg** — a unidade é só a lente de entrada/exibição, então trocar
+depois não corrompe histórico nem gráficos. A rampa também respeita a unidade:
+em lb ela vira nativa de academia americana (barra de 45lb, degraus na grade
+de 5lb, terra mín. 90lb).
 
 ## Editar o programa de treino
 
