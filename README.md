@@ -55,7 +55,7 @@ alto). Ajustado em jul/2026 com base na literatura — pesquisa e fontes em
 | **Ter** | Barra B — Terra pesado | Terra 4x3 @8 (rampa) · Supino fechado 3x8 leve · Puxada 4x10 · Pallof press 3x10/lado |
 | **Qua** | Aeróbico | Natação ou corrida, leve/moderado |
 | **Qui** | Barra C — Supino pesado | Supino 5x3 @8 (rampa) · Agacho 4x6 @7 volume · Terra 2x3 @6 técnico (~70% da terça) · Remada unilateral 3x10 |
-| **Sex** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 4x8 · Búlgaro 3x10/perna · Desenvolvimento 3x8 · Tríceps overhead/Rosca inclinada/Mesa flexora 3x12 |
+| **Sex** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 4x8 · Búlgaro 3x10/perna · Desenvolvimento halteres sentado 3x8 · Tríceps overhead/Rosca inclinada/Mesa flexora 3x12 |
 | **Sáb** | Off | Descanso |
 
 Aquecimento (estrutura RAMP, ~5min + rampa nos dias pesados): band pull-apart

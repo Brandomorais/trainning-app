@@ -304,6 +304,21 @@ literatura recente de hipertrofia:
   os novos movimentos começam do zero de propósito: a carga do overhead é bem
   menor que a do pushdown, e sugestão herdada induziria a erro.
 
+### Desenvolvimento: sentado com halteres (máquina equivale)
+
+Especificado em 18/07/2026. Para hipertrofia, a
+[meta-análise de 2023 (13 estudos)](https://pubmed.ncbi.nlm.nih.gov/37582807/)
+não achou **nenhuma diferença entre peso livre e máquina** — força é que é
+específica da modalidade. No EMG,
+[Saeterbakken & Fimland](https://pubmed.ncbi.nlm.nih.gov/23096062/) mostraram
+que halteres ativam mais o deltoide que a barra, e que sentado permite mais
+carga com menos demanda de estabilização. Como o papel do slot é acessório de
+hipertrofia num dia leve (véspera do off pré-domingo pesado), o critério é
+estímulo por unidade de fadiga: **sentado com halteres**, com **máquina como
+equivalente pleno** (use a que estiver livre). Militar em pé ficou de fora de
+propósito: cobra tronco/lombar que o SBD já treina de sobra e não cresce mais
+ombro — só entraria se overhead virasse meta própria.
+
 ---
 
 ## Fontes
@@ -338,3 +353,5 @@ literatura recente de hipertrofia:
 - [Maeo et al. — Triceps hypertrophy: overhead vs neutral arm position (EJSS 2023)](https://pubmed.ncbi.nlm.nih.gov/35819335/)
 - [Preacher vs incline curls — adaptações regionais distintas (2025)](https://pubmed.ncbi.nlm.nih.gov/39809454/)
 - [Cable curl e ângulo de extensão do ombro (2026)](https://pmc.ncbi.nlm.nih.gov/articles/PMC13076143/)
+- [Haugen et al. — Free-weight vs machine: força, hipertrofia e salto (meta-análise 2023)](https://pubmed.ncbi.nlm.nih.gov/37582807/)
+- [Saeterbakken & Fimland — posição do corpo e implemento no shoulder press (EMG)](https://pubmed.ncbi.nlm.nih.gov/23096062/)

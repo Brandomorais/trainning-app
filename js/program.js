@@ -47,7 +47,13 @@ export const EXERCISES = {
   'supino-inclinado':  { name: 'Supino inclinado',  type: 'accessory', repRange: [8, 12],  query: 'supino inclinado técnica' },
   'leg-press':         { name: 'Leg press',         type: 'accessory', repRange: [10, 12], query: 'leg press técnica' },
   'bulgaro':           { name: 'Agachamento búlgaro', type: 'accessory', repRange: [8, 12], query: 'agachamento búlgaro técnica' },
-  'desenvolvimento':   { name: 'Desenvolvimento',   type: 'accessory', repRange: [8, 10],  query: 'desenvolvimento de ombros técnica' },
+  /*
+   * Desenvolvimento: sentado com halteres (melhor deltoide por unidade de
+   * fadiga — Saeterbakken). Máquina é equivalente pleno pra hipertrofia
+   * (meta-análise 2023): use qual estiver livre. Militar em pé só se
+   * overhead virar meta própria — custa tronco/lombar que o SBD já cobra.
+   */
+  'desenvolvimento':   { name: 'Desenvolvimento halteres', type: 'accessory', repRange: [8, 10], query: 'desenvolvimento ombros halteres sentado técnica' },
   'triceps':           { name: 'Tríceps',           type: 'accessory', repRange: [12, 15], query: 'tríceps na polia técnica' }, // legado: era pushdown
   'biceps':            { name: 'Bíceps',            type: 'accessory', repRange: [12, 15], query: 'rosca direta técnica' },     // legado: era rosca direta
   /*
@@ -117,7 +123,7 @@ export const DAYS = {
     slots: [
       { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min' },
       { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna' },
-      { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s' },
+      { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s', note: 'sentado' },
       { exerciseId: 'triceps-overhead', sets: 3, reps: 12, rest: '60s' },
       { exerciseId: 'rosca-inclinada', sets: 3, reps: 12, rest: '60s' },
       { exerciseId: 'mesa-flexora', sets: 3, reps: 12, rest: '60s' },
