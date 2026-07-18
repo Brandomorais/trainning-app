@@ -185,6 +185,30 @@ só o band pull-apart. Como a rampa faz a maior parte da preparação específic
 os itens cortados (quadril isolado, torácica, ativação de glúteo) viram
 ferramenta de exceção: voltam se aparecer limitação recorrente.
 
+### 8.0 Core especializado por padrão (18/07/2026)
+
+Os dois slots de "Core 3x" (dom+ter) deixaram de ser genéricos: **dead bug
+3x10/lado no domingo** (anti-extensão/anterior) e **Pallof press 3x10/lado na
+terça** (anti-rotação/lateral; prancha lateral como variação). Racional:
+
+- Agacho e terra pesados já são o melhor treino dos **extensores** — a
+  [ativação do eretor a 80% 1RM supera prancha/superman/side bridge em
+  ~53-65%](https://www.ncbi.nlm.nih.gov/pubmed/18076231). Core acessório de
+  extensão seria redundante.
+- O que o SBD **não** carrega é a musculatura anterior/lateral/rotacional:
+  [o agacho ativa reto abdominal/oblíquos só no nível de uma prancha](https://pmc.ncbi.nlm.nih.gov/articles/PMC6006542/),
+  e o [guia da Stronger by Science](https://www.strongerbyscience.com/core-training/)
+  nota que powerlifters competitivos não têm extensão lombar mais forte que
+  treinados recreativos — os padrões negligenciados são onde o trabalho direto paga.
+- [Meta-análise (Sports Med 2022)](https://pmc.ncbi.nlm.nih.gov/articles/PMC9213339/):
+  treino de tronco dá efeito pequeno em força máxima (SMD 0,39), grande em
+  resistência de tronco (1,29), moderado em performance (0,64), com ≥18
+  sessões — as 6 séries semanais em 2 dias estão na dose certa, sem inflar.
+- Alocação por dia: dead bug tem carga espinhal ~zero (domingo já mói os
+  extensores com agacho+stiff); Pallof não adiciona compressão lombar após o
+  terra. Progressão em reps/qualidade; quando 3x12 ficar fácil, adicionar
+  resistência (elástico mais forte, anilha no peito).
+
 ### 8.1 Esquema da rampa (18/07/2026)
 
 O app passou a calcular a rampa dos dias pesados em um card próprio:
@@ -273,3 +297,7 @@ ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
 - [Optimizing post activation potentiation (janela de potencialização vs fadiga)](https://pmc.ncbi.nlm.nih.gov/articles/PMC5260521/)
 - [Neves et al. — Warming-Up for Resistance Training: Narrative Review](https://www.intechopen.com/chapters/75109)
 - [Revisão sistemática — warm-up e desempenho de força (2021)](https://www.researchgate.net/publication/354354269_The_effect_of_warm-up_in_resistance_training_and_strength_performance_a_systematic_review)
+- [Nuzzo et al. — Trunk muscle activation: pesos livres vs exercícios isométricos de core](https://www.ncbi.nlm.nih.gov/pubmed/18076231)
+- [Prone bridge vs 6-RM back squat — ativação de core](https://pmc.ncbi.nlm.nih.gov/articles/PMC6006542/)
+- [Meta-análise — trunk muscle training em atletas (Sports Med 2022)](https://pmc.ncbi.nlm.nih.gov/articles/PMC9213339/)
+- [Stronger by Science — The Comprehensive Core Training Guide](https://www.strongerbyscience.com/core-training/)

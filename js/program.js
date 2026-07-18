@@ -11,6 +11,9 @@
  *  - accessory: progressão dupla — sobe reps até o topo de `repRange`,
  *               só então sobe a carga
  *  - quality:   progride em reps/qualidade, não em carga (core, ombro)
+ *
+ * Um slot pode ter `query`/`url` próprios: o ▶ do card usa o do slot antes
+ * do exercício (ex.: core é dead bug no domingo e Pallof na terça).
  */
 
 /*
@@ -31,7 +34,9 @@ export const EXERCISES = {
   'stiff':             { name: 'Stiff',             type: 'accessory', repRange: [10, 12], query: 'stiff barra técnica' },
   'supino-fechado':    { name: 'Supino fechado',    type: 'accessory', repRange: [8, 10],  query: 'supino fechado técnica' },
   'puxada':            { name: 'Puxada',            type: 'accessory', repRange: [10, 12], query: 'puxada alta polia técnica' },
-  'core':              { name: 'Core',              type: 'quality', query: 'exercícios de core prancha dead bug' },
+  'core':              { name: 'Core',              type: 'quality', query: 'exercícios de core prancha dead bug' }, // legado: registros antigos
+  'dead-bug':          { name: 'Dead bug',          type: 'quality', query: 'dead bug como fazer' },
+  'pallof':            { name: 'Pallof press',      type: 'quality', query: 'pallof press como fazer' },
   'remada-unilateral': { name: 'Remada unilateral', type: 'accessory', repRange: [10, 12], query: 'remada unilateral serrote técnica' },
   'supino-inclinado':  { name: 'Supino inclinado',  type: 'accessory', repRange: [8, 12],  query: 'supino inclinado técnica' },
   'leg-press':         { name: 'Leg press',         type: 'accessory', repRange: [10, 12], query: 'leg press técnica' },
@@ -55,7 +60,7 @@ export const DAYS = {
       { exerciseId: 'supino', sets: 4, reps: 6, rpe: 7, rest: '2-3min' },
       { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min' },
       { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s' },
-      { exerciseId: 'core', sets: 3, reps: null, rest: '60s' },
+      { exerciseId: 'dead-bug', sets: 3, reps: 10, rest: '60s', note: 'por lado' },
     ],
   },
   'aerobico': {
@@ -74,7 +79,7 @@ export const DAYS = {
       { exerciseId: 'terra', sets: 4, reps: 3, rpe: 8, rest: '3-5min', ramp: true },
       { exerciseId: 'supino-fechado', sets: 3, reps: 8, rest: '2-3min', note: 'leve' },
       { exerciseId: 'puxada', sets: 4, reps: 10, rest: '90s-2min' },
-      { exerciseId: 'core', sets: 3, reps: null, rest: '60s' },
+      { exerciseId: 'pallof', sets: 3, reps: 10, rest: '60s', note: 'por lado' },
     ],
   },
   'barra-c': {
@@ -142,8 +147,10 @@ export const MOBILITY_NOTE = 'Mobilidade dinâmica específica — nunca estáti
  * Barra olímpica — base da rampa de aquecimento calculada (rampSets em
  * progression.js). `rampFromFloor` no exercício = rampa sem barra vazia
  * (terra: a barra precisa de anilhas para ficar na altura do chão).
+ * Em academia de libras a barra padrão é 45lb (~20,4kg).
  */
 export const BAR_WEIGHT = 20;
+export const BAR_WEIGHT_LB = 45;
 
 export const RPE_SCALE = [
   { rpe: 10, hint: 'falha' },
