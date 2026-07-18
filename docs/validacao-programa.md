@@ -281,6 +281,29 @@ ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
   desenhados.
 - Natação como aeróbico principal — a modalidade com menor interferência.
 
+## Braços — tríceps overhead e rosca inclinada (18/07/2026)
+
+A Barra D trocou "tríceps na polia" (pushdown) por **tríceps overhead** e
+"rosca direta" por **rosca inclinada**, extraindo o princípio do treino em
+**comprimento muscular longo** — a área com resultados mais fortes da
+literatura recente de hipertrofia:
+
+- **Tríceps**: [Maeo 2023](https://pubmed.ncbi.nlm.nih.gov/35819335/)
+  (braço a braço, 12 semanas) — extensão overhead cresceu a cabeça longa
+  **+28,5% vs +19,6%** do pushdown (~1,4x), e até as cabeças lateral/medial
+  cresceram mais. A cabeça longa é biarticular e só alonga com o braço acima
+  da cabeça ([análise SBS](https://www.strongerbyscience.com/research-spotlight-triceps/)).
+  É a troca de acessório com melhor respaldo do programa.
+- **Bíceps**: [preacher vs inclinada (2025)](https://pubmed.ncbi.nlm.nih.gov/39809454/) —
+  as duas crescem, em regiões diferentes: **inclinada** (ombro estendido =
+  alongamento na origem) → proximal; **Scott** (torque no início do arco) →
+  distal/braquial. [Polia com ombro estendido (2026)](https://pmc.ncbi.nlm.nih.gov/articles/PMC13076143/)
+  aponta na mesma direção. Ficou a inclinada; **Scott é a variação de ciclo**
+  se quiser somar o estímulo distal.
+- Histórico dos ids antigos (`triceps`, `biceps`) preservado como legado —
+  os novos movimentos começam do zero de propósito: a carga do overhead é bem
+  menor que a do pushdown, e sugestão herdada induziria a erro.
+
 ---
 
 ## Fontes
@@ -312,3 +335,6 @@ ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
 - [Meta-análise — trunk muscle training em atletas (Sports Med 2022)](https://pmc.ncbi.nlm.nih.gov/articles/PMC9213339/)
 - [Stronger by Science — The Comprehensive Core Training Guide](https://www.strongerbyscience.com/core-training/)
 - [Escamilla et al. — EMG de exercícios abdominais tradicionais e não tradicionais](https://pubmed.ncbi.nlm.nih.gov/16649890/)
+- [Maeo et al. — Triceps hypertrophy: overhead vs neutral arm position (EJSS 2023)](https://pubmed.ncbi.nlm.nih.gov/35819335/)
+- [Preacher vs incline curls — adaptações regionais distintas (2025)](https://pubmed.ncbi.nlm.nih.gov/39809454/)
+- [Cable curl e ângulo de extensão do ombro (2026)](https://pmc.ncbi.nlm.nih.gov/articles/PMC13076143/)

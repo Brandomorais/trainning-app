@@ -48,8 +48,16 @@ export const EXERCISES = {
   'leg-press':         { name: 'Leg press',         type: 'accessory', repRange: [10, 12], query: 'leg press técnica' },
   'bulgaro':           { name: 'Agachamento búlgaro', type: 'accessory', repRange: [8, 12], query: 'agachamento búlgaro técnica' },
   'desenvolvimento':   { name: 'Desenvolvimento',   type: 'accessory', repRange: [8, 10],  query: 'desenvolvimento de ombros técnica' },
-  'triceps':           { name: 'Tríceps',           type: 'accessory', repRange: [12, 15], query: 'tríceps na polia técnica' },
-  'biceps':            { name: 'Bíceps',            type: 'accessory', repRange: [12, 15], query: 'rosca direta técnica' },
+  'triceps':           { name: 'Tríceps',           type: 'accessory', repRange: [12, 15], query: 'tríceps na polia técnica' }, // legado: era pushdown
+  'biceps':            { name: 'Bíceps',            type: 'accessory', repRange: [12, 15], query: 'rosca direta técnica' },     // legado: era rosca direta
+  /*
+   * Braços em comprimento longo (validação, seção Braços 18/07/2026):
+   * overhead alonga a cabeça longa do tríceps (~1,4x mais crescimento que
+   * pushdown — Maeo 2023); inclinada alonga o bíceps na origem. Variação de
+   * ciclo para bíceps: rosca Scott (cresce mais a porção distal/braquial).
+   */
+  'triceps-overhead':  { name: 'Tríceps overhead',  type: 'accessory', repRange: [12, 15], query: 'extensão tríceps polia acima da cabeça corda' },
+  'rosca-inclinada':   { name: 'Rosca inclinada',   type: 'accessory', repRange: [12, 15], query: 'rosca inclinada banco 45 graus halteres' },
   'mesa-flexora':      { name: 'Mesa flexora',      type: 'accessory', repRange: [12, 15], query: 'mesa flexora técnica' },
 };
 
@@ -110,8 +118,8 @@ export const DAYS = {
       { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min' },
       { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna' },
       { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s' },
-      { exerciseId: 'triceps', sets: 3, reps: 12, rest: '60s' },
-      { exerciseId: 'biceps', sets: 3, reps: 12, rest: '60s' },
+      { exerciseId: 'triceps-overhead', sets: 3, reps: 12, rest: '60s' },
+      { exerciseId: 'rosca-inclinada', sets: 3, reps: 12, rest: '60s' },
       { exerciseId: 'mesa-flexora', sets: 3, reps: 12, rest: '60s' },
     ],
   },
