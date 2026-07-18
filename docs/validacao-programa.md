@@ -208,6 +208,16 @@ terça** (anti-rotação/lateral; prancha lateral como variação). Racional:
   extensores com agacho+stiff); Pallof não adiciona compressão lombar após o
   terra. Progressão em reps/qualidade; quando 3x12 ficar fácil, adicionar
   resistência (elástico mais forte, anilha no peito).
+- **Escolhas não são unânimes — upgrade path.** Em EMG puro,
+  [ab wheel rollout e elevação de pernas na barra ativam mais reto/oblíquos](https://pubmed.ncbi.nlm.nih.gov/16649890/)
+  (Escamilla 2006) que dead bug/prancha. Dead bug e Pallof entram como degrau
+  de entrada pela relação estímulo/custo no fim de sessões pesadas — não como
+  teto. Escada combinada (18/07/2026):
+  **anterior**: dead bug → dead bug + anilha no peito → **ab wheel rollout** ·
+  **anti-rotação**: Pallof → elástico/polia mais pesado → **suitcase carry
+  pesado** (QL/oblíquos + pegada). Alternativas de custo zero: prancha
+  lateral e bird dog (big three do McGill, viés saúde lombar). Subir o degrau
+  quando 3x12 do atual ficar fácil por 2+ semanas.
 
 ### 8.1 Esquema da rampa (18/07/2026)
 
@@ -301,3 +311,4 @@ ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
 - [Prone bridge vs 6-RM back squat — ativação de core](https://pmc.ncbi.nlm.nih.gov/articles/PMC6006542/)
 - [Meta-análise — trunk muscle training em atletas (Sports Med 2022)](https://pmc.ncbi.nlm.nih.gov/articles/PMC9213339/)
 - [Stronger by Science — The Comprehensive Core Training Guide](https://www.strongerbyscience.com/core-training/)
+- [Escamilla et al. — EMG de exercícios abdominais tradicionais e não tradicionais](https://pubmed.ncbi.nlm.nih.gov/16649890/)

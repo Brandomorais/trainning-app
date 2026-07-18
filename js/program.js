@@ -35,6 +35,12 @@ export const EXERCISES = {
   'supino-fechado':    { name: 'Supino fechado',    type: 'accessory', repRange: [8, 10],  query: 'supino fechado técnica' },
   'puxada':            { name: 'Puxada',            type: 'accessory', repRange: [10, 12], query: 'puxada alta polia técnica' },
   'core':              { name: 'Core',              type: 'quality', query: 'exercícios de core prancha dead bug' }, // legado: registros antigos
+  /*
+   * Core — upgrade path (quando 3x12 ficar fácil, ver validação §8.0):
+   *   dead bug → + anilha no peito → ab wheel rollout (campeão de EMG)
+   *   Pallof   → elástico/polia mais pesado → suitcase carry pesado
+   * Trocar = novo id aqui + trocar o exerciseId no slot (nunca renomear ids).
+   */
   'dead-bug':          { name: 'Dead bug',          type: 'quality', query: 'dead bug como fazer' },
   'pallof':            { name: 'Pallof press',      type: 'quality', query: 'pallof press como fazer' },
   'remada-unilateral': { name: 'Remada unilateral', type: 'accessory', repRange: [10, 12], query: 'remada unilateral serrote técnica' },
