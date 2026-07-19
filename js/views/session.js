@@ -21,6 +21,8 @@ import {
   deleteCardio,
   getSettings,
   setSettings,
+  getExerciseNotes,
+  setExerciseNote,
 } from '../db.js';
 import {
   toISODate,
@@ -257,7 +259,7 @@ function slotCard(slot, ctx) {
       </div>
       <label class="field-label">RPE ${targetRpe ? `(alvo ${targetRpe})` : '(opcional)'}</label>
       <div class="rpe-row">${rpeButtons}<button class="rpe-btn" data-rpe="">—</button></div>
-      <input class="notes-input" type="text" placeholder="Notas (opcional)" maxlength="200">
+      <input class="notes-input ex-notes" type="text" placeholder="Notas do exercício (opcional)" maxlength="200" value="${esc(ctx.noteFor(activeId))}">
       <button class="log-btn">${done ? 'Registrar série extra' : `Registrar série ${todays.length + 1}/${effSets}`}</button>
     </section>`;
 }
@@ -344,13 +346,16 @@ export async function render(el, dayKey, logDate) {
 
   const today = toISODate();
   const date = logDate && logDate <= today ? logDate : today;
-  const [logs, cycle, cardio, settings] = await Promise.all([
+  const [logs, cycle, cardio, settings, exNotes] = await Promise.all([
     getLogs(),
     getCycle(),
     getCardio(),
     getSettings(),
+    getExerciseNotes(),
   ]);
   const units = settings.units ?? {};
+  const noteFor = (exerciseId) =>
+    exNotes.find((n) => n.date === date && n.dayKey === dayKey && n.exerciseId === exerciseId)?.text ?? '';
   const wk = cycleWeek(cycle, date);
   const deload = wk?.deload ?? false;
   const lastLog =
@@ -359,7 +364,7 @@ export async function render(el, dayKey, logDate) {
           .filter((l) => l.date === date && l.dayKey === dayKey)
           .reduce((a, b) => (!a || b.createdAt > a.createdAt ? b : a), null)
       : null;
-  const ctx = { logs, cardio, date, deload, dayKey, lastLog, units };
+  const ctx = { logs, cardio, date, deload, dayKey, lastLog, units, noteFor };
 
   let body = '';
   if (day.kind === 'lift') {
@@ -424,9 +429,19 @@ export async function render(el, dayKey, logDate) {
     }
   };
 
+  // Nota do exercício: auto-save com debounce (funciona sem registrar série).
+  let noteTimer = null;
+  const saveNote = (card) =>
+    setExerciseNote({ date, dayKey, exerciseId: card.dataset.ex, text: card.querySelector('.ex-notes').value });
+
   el.oninput = (e) => {
     if (e.target.classList.contains('in-dist') || e.target.classList.contains('in-time')) {
       updatePacePreview(el);
+    }
+    if (e.target.classList.contains('ex-notes')) {
+      const card = e.target.closest('.exercise');
+      clearTimeout(noteTimer);
+      noteTimer = setTimeout(() => saveNote(card), 400);
     }
     if (e.target.classList.contains('in-ramp-target')) {
       const card = e.target.closest('.ramp-card');
@@ -522,11 +537,12 @@ export async function render(el, dayKey, logDate) {
 
       const selectedRpe = card.querySelector('.rpe-btn.selected');
       const rpe = selectedRpe && selectedRpe.dataset.rpe !== '' ? parseFloat(selectedRpe.dataset.rpe) : null;
-      const notes = card.querySelector('.notes-input').value.trim();
       const exerciseId = card.dataset.ex;
       const setNumber =
         logs.filter((l) => l.date === date && l.exerciseId === exerciseId).length + 1;
 
+      clearTimeout(noteTimer);
+      await saveNote(card); // nota digitada agora não se perde no rerender
       await addLog({
         date,
         dayKey,
@@ -535,7 +551,6 @@ export async function render(el, dayKey, logDate) {
         weight,
         reps: Math.round(reps),
         rpe,
-        notes,
         isDeload: deload,
       });
       await rerender();

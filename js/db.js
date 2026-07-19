@@ -5,10 +5,17 @@
  */
 import { get, set, del } from './vendor/idb-keyval.js';
 
-export const SCHEMA_VERSION = 3; // v3: + settings (unidade por exercício); backups v1/v2 seguem importáveis
+export const SCHEMA_VERSION = 4; // v4: + exerciseNotes (nota por exercício/dia); backups v1-v3 seguem importáveis
 const APP_ID = 'treino-powerlifting';
 
-const KEYS = { logs: 'logs', cardio: 'cardio', cycle: 'cycle', selectedSession: 'selectedSession', settings: 'settings' };
+const KEYS = {
+  logs: 'logs',
+  cardio: 'cardio',
+  cycle: 'cycle',
+  selectedSession: 'selectedSession',
+  settings: 'settings',
+  exerciseNotes: 'exerciseNotes',
+};
 
 export function newId() {
   return (crypto.randomUUID)
@@ -90,6 +97,23 @@ export async function setCycle(cycle) {
   await set(KEYS.cycle, cycle);
 }
 
+/* ---------- Notas por exercício/dia ---------- */
+/* Uma nota livre por (date, dayKey, exerciseId) — o granulado é o exercício
+ * na sessão, não a série. Texto vazio apaga o registro. */
+export async function getExerciseNotes() {
+  return (await get(KEYS.exerciseNotes)) ?? [];
+}
+
+export async function setExerciseNote({ date, dayKey, exerciseId, text }) {
+  const notes = await getExerciseNotes();
+  const rest = notes.filter(
+    (n) => !(n.date === date && n.dayKey === dayKey && n.exerciseId === exerciseId)
+  );
+  const trimmed = (text ?? '').trim();
+  if (trimmed) rest.push({ id: newId(), date, dayKey, exerciseId, text: trimmed, updatedAt: Date.now() });
+  await set(KEYS.exerciseNotes, rest);
+}
+
 /* ---------- Preferências (unidade por exercício etc.) ---------- */
 /* Pesos são sempre GRAVADOS em kg; `units[exerciseId] = 'lb'` só muda a
  * lente de entrada/exibição daquele exercício (máquinas em libras). */
@@ -120,6 +144,7 @@ export async function exportData() {
     logs: await getLogs(),
     cardio: await getCardio(),
     settings: await getSettings(),
+    exerciseNotes: await getExerciseNotes(),
   };
 }
 
@@ -140,6 +165,7 @@ export async function importData(data) {
   await saveLogs(data.logs);
   await saveCardio(data.cardio ?? []); // backups v1 entram sem cardio
   await setSettings(data.settings ?? { units: {} }); // backups v1/v2: tudo kg
+  await set(KEYS.exerciseNotes, data.exerciseNotes ?? []); // v1-v3: sem notas de exercício
   if (data.cycle && data.cycle.startDate) await setCycle(data.cycle);
 }
 
@@ -149,4 +175,5 @@ export async function wipeAll() {
   await del(KEYS.cycle);
   await del(KEYS.selectedSession);
   await del(KEYS.settings);
+  await del(KEYS.exerciseNotes);
 }

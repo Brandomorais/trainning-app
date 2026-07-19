@@ -3,7 +3,7 @@
  * modalidade aeróbica, gráficos + lista de sessões.
  */
 import { EXERCISES, DAYS, CARDIO_MODALITIES } from '../program.js';
-import { getLogs, getCardio, getSettings } from '../db.js';
+import { getLogs, getCardio, getSettings, getExerciseNotes } from '../db.js';
 import {
   sessionsFor,
   bestE1RM,
@@ -72,7 +72,7 @@ function resumoHTML(logs) {
 
 /* ---------- Detalhe de exercício de força ---------- */
 /* Dados são kg; `unit` = lente de exibição do exercício (máquinas em lb). */
-function strengthDetail(logs, unit) {
+function strengthDetail(logs, unit, exNotes) {
   const sessions = sessionsFor(logs, selectedEx);
 
   const points = sessions.map((s) => ({
@@ -112,6 +112,10 @@ function strengthDetail(logs, unit) {
     .reverse()
     .map((s) => {
       const isDeload = s.sets.some((x) => x.isDeload);
+      const dayNote = exNotes
+        .filter((n) => n.date === s.date && n.exerciseId === selectedEx)
+        .map((n) => n.text)
+        .join(' · ');
       const rows = s.sets
         .map((x) => {
           const label = `${x.weight === 0 ? 'PC' : fmt1(displayWeight(x.weight, unit))} × ${x.reps}${x.rpe ? ` @RPE${x.rpe}` : ''}`;
@@ -123,6 +127,7 @@ function strengthDetail(logs, unit) {
       return `
         <div class="session">
           <h3>${formatDateLong(s.date)}${isDeload ? '<span class="tag-deload">DELOAD</span>' : ''}</h3>
+          ${dayNote ? `<p class="session-note">${esc(dayNote)}</p>` : ''}
           <ul>${rows}</ul>
         </div>`;
     })
@@ -230,7 +235,12 @@ function cardioDetail(cardio, modality) {
 
 /* ---------- Tela ---------- */
 export async function render(el) {
-  const [logs, cardio, settings] = await Promise.all([getLogs(), getCardio(), getSettings()]);
+  const [logs, cardio, settings, exNotes] = await Promise.all([
+    getLogs(),
+    getCardio(),
+    getSettings(),
+    getExerciseNotes(),
+  ]);
   const units = settings.units ?? {};
 
   const strengthIds = Object.keys(EXERCISES).filter((id) => logs.some((l) => l.exerciseId === id));
@@ -260,7 +270,7 @@ export async function render(el) {
 
   const detail = selectedEx.startsWith('cardio:')
     ? cardioDetail(cardio, selectedEx.slice('cardio:'.length))
-    : strengthDetail(logs, units[selectedEx] ?? 'kg');
+    : strengthDetail(logs, units[selectedEx] ?? 'kg', exNotes);
 
   el.innerHTML = `
     <header class="page-head"><h1>Histórico</h1></header>

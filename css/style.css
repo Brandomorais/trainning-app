@@ -429,6 +429,7 @@ input[type="date"] {
   gap: 10px;
 }
 .session li .note { color: var(--muted); font-style: italic; font-size: 0.85rem; text-align: right; }
+.session-note { color: var(--muted); font-style: italic; font-size: 0.85rem; margin: 0 0 6px; }
 .session li .e1rm { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
 .tag-deload { color: var(--danger); font-weight: 700; font-size: 0.75rem; margin-left: 6px; }
 
