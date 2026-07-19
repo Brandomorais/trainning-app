@@ -84,7 +84,7 @@ export const EXERCISES = {
   'hiperextensao':     { name: 'Hiperextensão 45°', type: 'accessory', repRange: [10, 15], query: 'hiperextensão banco 45 graus técnica' },
   'good-morning':      { name: 'Good morning',      type: 'accessory', repRange: [8, 10],  query: 'good morning barra técnica' },
   'dips':              { name: 'Paralelas (dips)',  type: 'accessory', repRange: [8, 12],  query: 'paralelas dips técnica' },
-  'supino-maq-neutra': { name: 'Supino máquina',    type: 'accessory', repRange: [8, 10],  query: 'supino máquina pegada neutra' },
+  'supino-maq-neutra': { name: 'Máquina pegada neutra', type: 'accessory', repRange: [8, 10], query: 'supino máquina pegada neutra' },
   'barra-fixa':        { name: 'Barra fixa',        type: 'accessory', repRange: [6, 10],  query: 'barra fixa pull up técnica' },
   'puxada-maquina':    { name: 'Puxada máquina',    type: 'accessory', repRange: [10, 12], query: 'puxada máquina articulada técnica' },
   'remada-cabo-uni':   { name: 'Remada cabo unilateral',    type: 'accessory', repRange: [10, 12], query: 'remada unilateral cabo técnica' },
@@ -99,9 +99,10 @@ export const EXERCISES = {
   'rosca-scott':       { name: 'Rosca Scott',       type: 'accessory', repRange: [12, 15], query: 'rosca scott banco técnica' },
   'flexora-em-pe':     { name: 'Flexora em pé',     type: 'accessory', repRange: [12, 15], query: 'flexora em pé unilateral técnica' },
   'nordic':            { name: 'Nordic assistido',  type: 'quality', query: 'nordic curl assistido técnica' },
-  'prancha':           { name: 'Prancha',           type: 'quality', query: 'prancha abdominal técnica' },
+  /* `timed`: isométrico — o campo de reps vira segundos (grava no mesmo lugar). */
+  'prancha':           { name: 'Prancha',           type: 'quality', timed: true, secRange: [30, 60], query: 'prancha abdominal técnica' },
   'ab-wheel':          { name: 'Ab wheel',          type: 'quality', query: 'ab wheel rollout técnica' },
-  'prancha-lateral':   { name: 'Prancha lateral',   type: 'quality', query: 'prancha lateral técnica' },
+  'prancha-lateral':   { name: 'Prancha lateral',   type: 'quality', timed: true, secRange: [20, 45], query: 'prancha lateral técnica' },
   'bird-dog':          { name: 'Bird dog',          type: 'quality', query: 'bird dog exercício técnica' },
 };
 

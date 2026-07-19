@@ -78,11 +78,11 @@ function rpeRefHTML() {
 const chipWeight = (kg, unit) =>
   kg === 0 ? 'PC' : unit === 'lb' ? `${displayWeight(kg, 'lb')}lb` : String(displayWeight(kg, 'kg'));
 
-function setChips(todaysSets, unit) {
+function setChips(todaysSets, unit, timed = false) {
   if (!todaysSets.length) return '';
   const chips = todaysSets
     .map(
-      (s) => `<span class="set-chip">S${s.setNumber} · ${chipWeight(s.weight, unit)}×${s.reps}${s.rpe ? ` @${s.rpe}` : ''}
+      (s) => `<span class="set-chip">S${s.setNumber} · ${chipWeight(s.weight, unit)}×${s.reps}${timed ? 's' : ''}${s.rpe ? ` @${s.rpe}` : ''}
         <button class="del-set" data-id="${s.id}" aria-label="Apagar série">✕</button></span>`
     )
     .join('');
@@ -205,17 +205,19 @@ function slotCard(slot, ctx) {
   const adv = advise(effSlot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey, unit);
   const hintCls =
     adv.status === 'estagnado' ? ' hint-bad' : adv.status === 'atencao' ? ' hint-warn' : '';
+  const timed = Boolean(ex.timed);
   const lastToday = todays[todays.length - 1];
-  const prefKg = lastToday ? lastToday.weight : adv.weight;
+  const prefKg = lastToday ? lastToday.weight : timed ? 0 : adv.weight;
   const prefWeight = prefKg == null ? '' : displayWeight(prefKg, unit);
-  const prefReps = slot.reps ?? 10;
+  const prefReps = timed ? (lastToday?.reps ?? ex.secRange?.[0] ?? 30) : slot.reps ?? 10;
   const step = unit === 'lb' ? 5 : 2.5;
   const done = todays.length >= effSets;
 
-  const prescription =
-    `${effSets}x${slot.reps ?? ''}` +
-    (slot.rpe && !ctx.deload ? ` @RPE${slot.rpe}` : '') +
-    (effSlot.note ? ` (${effSlot.note})` : '');
+  const prescription = timed
+    ? `${effSets}x ${ex.secRange ? ex.secRange.join('-') : '30-60'}s`
+    : `${effSets}x${slot.reps ?? ''}` +
+      (slot.rpe && !ctx.deload ? ` @RPE${slot.rpe}` : '') +
+      (effSlot.note ? ` (${effSlot.note})` : '');
 
   const targetRpe = ctx.deload ? null : slot.rpe;
   const rpeButtons = [6, 7, 8, 9, 10]
@@ -236,7 +238,7 @@ function slotCard(slot, ctx) {
       ${altRowHTML(slot, activeId)}
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
-      ${setChips(todays, unit)}
+      ${setChips(todays, unit, timed)}
       ${returnLineHTML(effSlot, ctx)}
       <div class="unit-row">
         <span class="field-label">Carga (${unit})</span>
@@ -247,11 +249,11 @@ function slotCard(slot, ctx) {
         <input class="in-weight" type="text" inputmode="decimal" value="${prefWeight}" placeholder="${unit}">
         <button class="step-btn" data-delta="${step}" aria-label="Mais ${step} ${unit}">+</button>
       </div>
-      <label class="field-label">Reps</label>
+      <label class="field-label">${timed ? 'Segundos' : 'Reps'}</label>
       <div class="stepper">
-        <button class="step-btn" data-delta="-1" aria-label="Menos 1 rep">−</button>
+        <button class="step-btn" data-delta="-${timed ? 5 : 1}" aria-label="Menos ${timed ? '5 segundos' : '1 rep'}">−</button>
         <input class="in-reps" type="text" inputmode="numeric" value="${prefReps}">
-        <button class="step-btn" data-delta="1" aria-label="Mais 1 rep">+</button>
+        <button class="step-btn" data-delta="${timed ? 5 : 1}" aria-label="Mais ${timed ? '5 segundos' : '1 rep'}">+</button>
       </div>
       <label class="field-label">RPE ${targetRpe ? `(alvo ${targetRpe})` : '(opcional)'}</label>
       <div class="rpe-row">${rpeButtons}<button class="rpe-btn" data-rpe="">—</button></div>

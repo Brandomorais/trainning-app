@@ -315,7 +315,12 @@ export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') 
     .filter((s) => s.sets.length && s.date < dateISO);
 
   if (ex.type === 'quality') {
-    return { text: 'Progrida em reps e qualidade de execução, não em carga.', weight: null };
+    return {
+      text: ex.timed
+        ? 'Progrida em tempo sob tensão e qualidade de execução, não em carga.'
+        : 'Progrida em reps e qualidade de execução, não em carga.',
+      weight: null,
+    };
   }
 
   if (!past.length) {
