@@ -73,6 +73,11 @@ entre aproximações (~1min) e 2-3min antes da 1ª série válida — fontes em
 Terra técnico e agacho volume progridem **separados** dos dias pesados (a
 sugestão de carga é por dia do programa).
 
+Aparelho ocupado/inexistente: todo acessório tem **até 2 alternativas em ordem
+de preferência** (chips no card; ★ = recomendado, mesmo padrão de movimento).
+A troca vale só para o dia — amanhã volta ao recomendado — e cada alternativa
+tem histórico e progressão próprios. SBD não tem alternativa de propósito.
+
 Máquinas em libras: cada exercício tem um toggle **kg | lb** no card da tela
 de treino (útil pra polia/máquinas marcadas em lb). Os pesos são sempre
 **gravados em kg** — a unidade é só a lente de entrada/exibição, então trocar

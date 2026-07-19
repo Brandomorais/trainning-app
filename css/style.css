@@ -242,6 +242,19 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
 /* ---------- Formulário de série ---------- */
 .field-label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 2px 6px; }
 
+/* Alternativas do slot (aparelho ocupado): chips ordenados, ★ = recomendado */
+.alt-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+.alt-btn {
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  line-height: 1;
+}
+.alt-btn.selected { border-color: var(--accent); color: var(--text); font-weight: 600; }
+
 /* Unidade por exercício (kg | lb) — máquinas em libras */
 .unit-row { display: flex; align-items: center; justify-content: space-between; margin: 10px 2px 6px; }
 .unit-row .field-label { margin: 0; }

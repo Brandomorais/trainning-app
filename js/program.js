@@ -14,6 +14,12 @@
  *
  * Um slot pode ter `query`/`url` próprios: o ▶ do card usa o do slot antes
  * do exercício (ex.: core é dead bug no domingo e Pallof na terça).
+ *
+ * Alternativas (aparelho ocupado/inexistente): slots de acessório podem ter
+ * `alternatives: [id1, id2]` — fallbacks em ordem de preferência, mostrados
+ * como chips no card. A troca vale só para o dia (amanhã volta ao
+ * recomendado) e cada alternativa tem histórico/progressão próprios.
+ * SBD não tem alternativa de propósito.
  */
 
 /*
@@ -61,7 +67,7 @@ export const EXERCISES = {
    */
   'desenvolvimento':   { name: 'Desenvolvimento halteres', type: 'accessory', repRange: [8, 10], query: 'desenvolvimento ombros halteres sentado técnica' },
   'triceps':           { name: 'Tríceps',           type: 'accessory', repRange: [12, 15], query: 'tríceps na polia técnica' }, // legado: era pushdown
-  'biceps':            { name: 'Bíceps',            type: 'accessory', repRange: [12, 15], query: 'rosca direta técnica' },     // legado: era rosca direta
+  'biceps':            { name: 'Rosca direta',      type: 'accessory', repRange: [12, 15], query: 'rosca direta técnica' },     // legado; volta como fallback da inclinada
   /*
    * Braços em comprimento longo (validação, seção Braços 18/07/2026):
    * overhead alonga a cabeça longa do tríceps (~1,4x mais crescimento que
@@ -71,6 +77,32 @@ export const EXERCISES = {
   'triceps-overhead':  { name: 'Tríceps overhead',  type: 'accessory', repRange: [12, 15], query: 'extensão tríceps polia acima da cabeça corda' },
   'rosca-inclinada':   { name: 'Rosca inclinada',   type: 'accessory', repRange: [12, 15], query: 'rosca inclinada banco 45 graus halteres' },
   'mesa-flexora':      { name: 'Mesa flexora',      type: 'accessory', repRange: [12, 15], query: 'mesa flexora técnica' },
+
+  /* ---- Alternativas (fallbacks de aparelho, mesmo padrão de movimento) ---- */
+  'remada-cabo':       { name: 'Remada no cabo',    type: 'accessory', repRange: [8, 12],  query: 'remada baixa cabo sentado técnica' },
+  'remada-maquina':    { name: 'Remada máquina',    type: 'accessory', repRange: [8, 12],  query: 'remada máquina técnica' },
+  'hiperextensao':     { name: 'Hiperextensão 45°', type: 'accessory', repRange: [10, 15], query: 'hiperextensão banco 45 graus técnica' },
+  'good-morning':      { name: 'Good morning',      type: 'accessory', repRange: [8, 10],  query: 'good morning barra técnica' },
+  'dips':              { name: 'Paralelas (dips)',  type: 'accessory', repRange: [8, 12],  query: 'paralelas dips técnica' },
+  'supino-maq-neutra': { name: 'Supino máquina',    type: 'accessory', repRange: [8, 10],  query: 'supino máquina pegada neutra' },
+  'barra-fixa':        { name: 'Barra fixa',        type: 'accessory', repRange: [6, 10],  query: 'barra fixa pull up técnica' },
+  'puxada-maquina':    { name: 'Puxada máquina',    type: 'accessory', repRange: [10, 12], query: 'puxada máquina articulada técnica' },
+  'remada-cabo-uni':   { name: 'Remada cabo unilateral',    type: 'accessory', repRange: [10, 12], query: 'remada unilateral cabo técnica' },
+  'remada-maq-uni':    { name: 'Remada máquina unilateral', type: 'accessory', repRange: [10, 12], query: 'remada máquina unilateral técnica' },
+  'inclinado-halteres':{ name: 'Inclinado halteres', type: 'accessory', repRange: [8, 12], query: 'supino inclinado halteres 30 graus técnica' },
+  'inclinado-maquina': { name: 'Inclinado máquina', type: 'accessory', repRange: [8, 12],  query: 'supino inclinado máquina técnica' },
+  'afundo':            { name: 'Afundo',            type: 'accessory', repRange: [8, 12],  query: 'afundo passada técnica' },
+  'desenv-maquina':    { name: 'Desenvolvimento máquina', type: 'accessory', repRange: [8, 10], query: 'desenvolvimento máquina ombro técnica' },
+  'arnold-press':      { name: 'Arnold press',      type: 'accessory', repRange: [8, 10],  query: 'arnold press técnica' },
+  'triceps-frances':   { name: 'Francês halter',    type: 'accessory', repRange: [12, 15], query: 'tríceps francês halter sentado técnica' },
+  'triceps-testa':     { name: 'Tríceps testa',     type: 'accessory', repRange: [12, 15], query: 'tríceps testa barra técnica' },
+  'rosca-scott':       { name: 'Rosca Scott',       type: 'accessory', repRange: [12, 15], query: 'rosca scott banco técnica' },
+  'flexora-em-pe':     { name: 'Flexora em pé',     type: 'accessory', repRange: [12, 15], query: 'flexora em pé unilateral técnica' },
+  'nordic':            { name: 'Nordic assistido',  type: 'quality', query: 'nordic curl assistido técnica' },
+  'prancha':           { name: 'Prancha',           type: 'quality', query: 'prancha abdominal técnica' },
+  'ab-wheel':          { name: 'Ab wheel',          type: 'quality', query: 'ab wheel rollout técnica' },
+  'prancha-lateral':   { name: 'Prancha lateral',   type: 'quality', query: 'prancha lateral técnica' },
+  'bird-dog':          { name: 'Bird dog',          type: 'quality', query: 'bird dog exercício técnica' },
 };
 
 export const DAYS = {
@@ -84,9 +116,9 @@ export const DAYS = {
     slots: [
       { exerciseId: 'agacho', sets: 4, reps: 4, rpe: 8, rest: '3-5min', ramp: true },
       { exerciseId: 'supino', sets: 4, reps: 6, rpe: 7, rest: '2-3min' },
-      { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min' },
-      { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s' },
-      { exerciseId: 'dead-bug', sets: 3, reps: 10, rest: '60s', note: 'por lado' },
+      { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min', alternatives: ['remada-cabo', 'remada-maquina'] },
+      { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s', alternatives: ['hiperextensao', 'good-morning'] },
+      { exerciseId: 'dead-bug', sets: 3, reps: 10, rest: '60s', note: 'por lado', alternatives: ['prancha', 'ab-wheel'] },
     ],
   },
   'aerobico': {
@@ -103,9 +135,9 @@ export const DAYS = {
     ],
     slots: [
       { exerciseId: 'terra', sets: 4, reps: 3, rpe: 8, rest: '3-5min', ramp: true },
-      { exerciseId: 'supino-fechado', sets: 3, reps: 8, rest: '2-3min', note: 'leve' },
-      { exerciseId: 'puxada', sets: 4, reps: 10, rest: '90s-2min' },
-      { exerciseId: 'pallof', sets: 3, reps: 10, rest: '60s', note: 'por lado' },
+      { exerciseId: 'supino-fechado', sets: 3, reps: 8, rest: '2-3min', note: 'leve', alternatives: ['dips', 'supino-maq-neutra'] },
+      { exerciseId: 'puxada', sets: 4, reps: 10, rest: '90s-2min', alternatives: ['barra-fixa', 'puxada-maquina'] },
+      { exerciseId: 'pallof', sets: 3, reps: 10, rest: '60s', note: 'por lado', alternatives: ['prancha-lateral', 'bird-dog'] },
     ],
   },
   'barra-c': {
@@ -118,7 +150,7 @@ export const DAYS = {
       { exerciseId: 'supino', sets: 5, reps: 3, rpe: 8, rest: '3-4min', ramp: true },
       { exerciseId: 'agacho', sets: 4, reps: 6, rpe: 7, rest: '2-3min', note: 'volume' },
       { exerciseId: 'terra', sets: 2, reps: 3, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da terça' },
-      { exerciseId: 'remada-unilateral', sets: 3, reps: 10, rest: '90s' },
+      { exerciseId: 'remada-unilateral', sets: 3, reps: 10, rest: '90s', alternatives: ['remada-cabo-uni', 'remada-maq-uni'] },
     ],
   },
   'barra-d': {
@@ -127,12 +159,12 @@ export const DAYS = {
     noPR: true,
     /* Dia leve: só o band pull-apart fixo, sem mobilidade extra. */
     slots: [
-      { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min', note: '30°' },
-      { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna' },
-      { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s', note: 'sentado' },
-      { exerciseId: 'triceps-overhead', sets: 3, reps: 12, rest: '60s' },
-      { exerciseId: 'rosca-inclinada', sets: 3, reps: 12, rest: '60s' },
-      { exerciseId: 'mesa-flexora', sets: 3, reps: 12, rest: '60s' },
+      { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min', note: '30°', alternatives: ['inclinado-halteres', 'inclinado-maquina'] },
+      { exerciseId: 'bulgaro', sets: 3, reps: 10, rest: '90s-2min', note: 'por perna', alternatives: ['leg-press', 'afundo'] },
+      { exerciseId: 'desenvolvimento', sets: 3, reps: 8, rest: '90s', note: 'sentado', alternatives: ['desenv-maquina', 'arnold-press'] },
+      { exerciseId: 'triceps-overhead', sets: 3, reps: 12, rest: '60s', alternatives: ['triceps-frances', 'triceps-testa'] },
+      { exerciseId: 'rosca-inclinada', sets: 3, reps: 12, rest: '60s', alternatives: ['rosca-scott', 'biceps'] },
+      { exerciseId: 'mesa-flexora', sets: 3, reps: 12, rest: '60s', alternatives: ['flexora-em-pe', 'nordic'] },
     ],
   },
   'off': {

@@ -161,15 +161,48 @@ function returnLineHTML(slot, ctx) {
   return `<p class="return-line">⏱ volte ~${hhmm}</p>`;
 }
 
+/*
+ * Alternativas: a troca vale só para o dia — o estado manual vive neste
+ * módulo (keyed por data+dia+slot) e amanhã o card volta ao recomendado.
+ * Se já há série registrada hoje em uma das opções, o card gruda nela.
+ */
+let slotChoices = {};
+
+function activeExerciseId(slot, ctx) {
+  const opts = [slot.exerciseId, ...(slot.alternatives ?? [])];
+  const manual = slotChoices[`${ctx.date}|${ctx.dayKey}|${slot.exerciseId}`];
+  if (manual && opts.includes(manual)) return manual;
+  const logged = opts.find((id) =>
+    ctx.logs.some((l) => l.date === ctx.date && l.dayKey === ctx.dayKey && l.exerciseId === id)
+  );
+  return logged ?? slot.exerciseId;
+}
+
+function altRowHTML(slot, activeId) {
+  if (!slot.alternatives?.length) return '';
+  const chips = [slot.exerciseId, ...slot.alternatives]
+    .map(
+      (id, i) =>
+        `<button class="alt-btn${id === activeId ? ' selected' : ''}" data-alt="${id}">${i === 0 ? '★ ' : ''}${EXERCISES[id].name}</button>`
+    )
+    .join('');
+  return `<div class="alt-row" data-slot="${slot.exerciseId}">${chips}</div>`;
+}
+
 function slotCard(slot, ctx) {
-  const ex = EXERCISES[slot.exerciseId];
+  const activeId = activeExerciseId(slot, ctx);
+  const ex = EXERCISES[activeId];
+  // Slot efetivo: prescrição do slot, exercício da opção ativa. A `note`
+  // descreve a execução do recomendado — não vale para os fallbacks.
+  const effSlot =
+    activeId === slot.exerciseId ? slot : { ...slot, exerciseId: activeId, note: null, query: null, url: null };
   const todays = ctx.logs
-    .filter((l) => l.date === ctx.date && l.exerciseId === slot.exerciseId)
+    .filter((l) => l.date === ctx.date && l.exerciseId === activeId)
     .sort((a, b) => a.createdAt - b.createdAt);
 
-  const unit = ctx.units[slot.exerciseId] ?? 'kg';
+  const unit = ctx.units[activeId] ?? 'kg';
   const effSets = ctx.deload ? Math.max(1, Math.ceil(slot.sets / 2)) : slot.sets;
-  const adv = advise(slot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey, unit);
+  const adv = advise(effSlot, ctx.logs, ctx.date, ctx.deload, ctx.dayKey, unit);
   const hintCls =
     adv.status === 'estagnado' ? ' hint-bad' : adv.status === 'atencao' ? ' hint-warn' : '';
   const lastToday = todays[todays.length - 1];
@@ -182,7 +215,7 @@ function slotCard(slot, ctx) {
   const prescription =
     `${effSets}x${slot.reps ?? ''}` +
     (slot.rpe && !ctx.deload ? ` @RPE${slot.rpe}` : '') +
-    (slot.note ? ` (${slot.note})` : '');
+    (effSlot.note ? ` (${effSlot.note})` : '');
 
   const targetRpe = ctx.deload ? null : slot.rpe;
   const rpeButtons = [6, 7, 8, 9, 10]
@@ -193,17 +226,18 @@ function slotCard(slot, ctx) {
     .join('');
 
   return `
-    <section class="card exercise" data-ex="${slot.exerciseId}">
+    <section class="card exercise" data-ex="${activeId}">
       <div class="ex-head">
         <h2>${ex.name}
-          <a class="video-link-inline" href="${youtubeURL(slot.query || slot.url ? slot : ex)}" target="_blank" rel="noopener" aria-label="Ver técnica no YouTube">▶</a>
+          <a class="video-link-inline" href="${youtubeURL(effSlot.query || effSlot.url ? effSlot : ex)}" target="_blank" rel="noopener" aria-label="Ver técnica no YouTube">▶</a>
           ${done ? '<span class="done-mark">✓</span>' : ''}</h2>
         <span class="prescription">${prescription}</span>
       </div>
+      ${altRowHTML(slot, activeId)}
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
       ${setChips(todays, unit)}
-      ${returnLineHTML(slot, ctx)}
+      ${returnLineHTML(effSlot, ctx)}
       <div class="unit-row">
         <span class="field-label">Carga (${unit})</span>
         ${unitToggleHTML(unit)}
@@ -407,6 +441,14 @@ export async function render(el, dayKey, logDate) {
       const step = parseFloat(stepBtn.dataset.delta);
       const next = Math.max(0, (parseNum(input.value) ?? 0) + step);
       input.value = String(Math.round(next * 100) / 100);
+      return;
+    }
+
+    const altBtn = e.target.closest('.alt-btn');
+    if (altBtn) {
+      const slotId = altBtn.closest('.alt-row').dataset.slot;
+      slotChoices[`${date}|${dayKey}|${slotId}`] = altBtn.dataset.alt;
+      await rerender();
       return;
     }
 
