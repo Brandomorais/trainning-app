@@ -1,5 +1,6 @@
 node_modules/
 .DS_Store
 .claude/
-# Relatórios de avaliação de ciclo: dados pessoais de treino — nunca subir (repo público)
+# Dados pessoais de treino — nunca subir (repo público)
 avaliacoes/
+backups/
