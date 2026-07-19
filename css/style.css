@@ -301,8 +301,10 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
   font-weight: 700;
   font-size: 1rem;
 }
-.rpe-btn.target { border-color: var(--accent); }
-.rpe-btn.selected { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+/* Alvo é lembrete (tracejado, vazio) — selecionado de verdade é preenchido. */
+.rpe-btn.target { border: 1px dashed var(--accent); color: var(--accent); }
+.rpe-btn.selected { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
+.set-chip .rpe-missing { color: var(--accent); font-weight: 700; }
 
 .notes-input {
   width: 100%;

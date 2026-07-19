@@ -80,11 +80,15 @@ function rpeRefHTML() {
 const chipWeight = (kg, unit) =>
   kg === 0 ? 'PC' : unit === 'lb' ? `${displayWeight(kg, 'lb')}lb` : String(displayWeight(kg, 'kg'));
 
-function setChips(todaysSets, unit, timed = false) {
+/* `hasRpeTarget`: série sem RPE num exercício com alvo ganha "@?" âmbar —
+ * lembrete visível de que faltou marcar (o RPE zera a cada registro). */
+function setChips(todaysSets, unit, timed = false, hasRpeTarget = false) {
   if (!todaysSets.length) return '';
   const chips = todaysSets
     .map(
-      (s) => `<span class="set-chip">S${s.setNumber} · ${chipWeight(s.weight, unit)}×${s.reps}${timed ? 's' : ''}${s.rpe ? ` @${s.rpe}` : ''}
+      (s) => `<span class="set-chip">S${s.setNumber} · ${chipWeight(s.weight, unit)}×${s.reps}${timed ? 's' : ''}${
+        s.rpe ? ` @${s.rpe}` : hasRpeTarget ? ' <span class="rpe-missing">@?</span>' : ''
+      }
         <button class="del-set" data-id="${s.id}" aria-label="Apagar série">✕</button></span>`
     )
     .join('');
@@ -240,7 +244,7 @@ function slotCard(slot, ctx) {
       ${altRowHTML(slot, activeId)}
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
-      ${setChips(todays, unit, timed)}
+      ${setChips(todays, unit, timed, targetRpe != null)}
       ${returnLineHTML(effSlot, ctx)}
       <div class="unit-row">
         <span class="field-label">Carga (${unit})</span>
