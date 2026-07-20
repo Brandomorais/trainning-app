@@ -374,13 +374,42 @@ export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') 
       };
     }
 
+    // RPE médio nas séries da carga máxima da última sessão modula o salto:
+    // ≥ alvo+1 segura a carga já; ≤ alvo−2 dobra o incremento; sem RPE
+    // marcado, mantém o incremento padrão com a ressalva no texto.
+    const lastRpes = last.sets
+      .filter((x) => x.weight === lastTop && x.rpe != null)
+      .map((x) => x.rpe);
+    const lastRpe = lastRpes.length
+      ? lastRpes.reduce((a, b) => a + b, 0) / lastRpes.length
+      : null;
+    const fmtRpe = (r) => `@${r.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}`;
+
+    if (slot.rpe && lastRpe != null && lastRpe >= slot.rpe + 1) {
+      return {
+        text: `Última: ${fmtWeight(lastTop, unit)} ${fmtRpe(lastRpe)}, acima do alvo @${slot.rpe} — segure ${fmtWeight(lastTop, unit)} e busque um RPE mais limpo antes de subir.`,
+        weight: lastTop,
+        status: 'atencao',
+      };
+    }
+
     // Incremento na grade da unidade: 5/2,5kg viram 10/5lb em academia de libras.
-    const incLb = ex.increment === 2.5 ? 5 : 10;
-    const w = lastTop + (unit === 'lb' ? lbToKg(incLb) : ex.increment);
+    const easy = slot.rpe && lastRpe != null && lastRpe <= slot.rpe - 2;
+    const mult = easy ? 2 : 1;
+    const incLb = (ex.increment === 2.5 ? 5 : 10) * mult;
+    const incKg = ex.increment * mult;
+    const w = lastTop + (unit === 'lb' ? lbToKg(incLb) : incKg);
+    const incTxt = unit === 'lb' ? `${incLb} lb` : `${incKg} kg`;
+    if (easy) {
+      return {
+        text: `Última: ${fmtWeight(lastTop, unit)} ${fmtRpe(lastRpe)}, bem abaixo do alvo @${slot.rpe} — dobro do incremento: ${fmtWeight(w, unit)} (+${incTxt}).`,
+        weight: w,
+      };
+    }
     return {
       text:
-        `Última: ${fmtWeight(lastTop, unit)}. Sugestão: ${fmtWeight(w, unit)} (+${unit === 'lb' ? `${incLb} lb` : `${ex.increment} kg`})` +
-        (slot.rpe ? ` — só se o RPE se manteve ≤ ${slot.rpe}.` : '.'),
+        `Última: ${fmtWeight(lastTop, unit)}${lastRpe != null ? ` ${fmtRpe(lastRpe)}` : ''}. Sugestão: ${fmtWeight(w, unit)} (+${incTxt})` +
+        (slot.rpe && lastRpe == null ? ` — só se o RPE se manteve ≤ ${slot.rpe}.` : '.'),
       weight: w,
     };
   }
