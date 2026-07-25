@@ -80,14 +80,14 @@ function rpeRefHTML() {
 const chipWeight = (kg, unit) =>
   kg === 0 ? 'PC' : unit === 'lb' ? `${displayWeight(kg, 'lb')}lb` : String(displayWeight(kg, 'kg'));
 
-/* `hasRpeTarget`: série sem RPE num exercício com alvo ganha "@?" âmbar —
- * lembrete visível de que faltou marcar (o RPE zera a cada registro). */
-function setChips(todaysSets, unit, timed = false, hasRpeTarget = false) {
+/* Série sem RPE ganha "@?" âmbar — mesmo em acessórios sem recomendação,
+ * pra sempre chamar atenção que faltou marcar (o RPE zera a cada registro). */
+function setChips(todaysSets, unit, timed = false) {
   if (!todaysSets.length) return '';
   const chips = todaysSets
     .map(
       (s) => `<span class="set-chip">S${s.setNumber} · ${chipWeight(s.weight, unit)}×${s.reps}${timed ? 's' : ''}${
-        s.rpe ? ` @${s.rpe}` : hasRpeTarget ? ' <span class="rpe-missing">@?</span>' : ''
+        s.rpe ? ` @${s.rpe}` : ' <span class="rpe-missing">@?</span>'
       }
         <button class="del-set" data-id="${s.id}" aria-label="Apagar série">✕</button></span>`
     )
@@ -225,12 +225,16 @@ function slotCard(slot, ctx) {
       (slot.rpe && !ctx.deload ? ` @RPE${slot.rpe}` : '') +
       (effSlot.note ? ` (${effSlot.note})` : '');
 
-  const targetRpe = ctx.deload ? null : slot.rpe;
+  // Alvo real do programa vs sugestão inferida (deload / execução "leve") —
+  // ambos pré-selecionam um RPE default, mas o label distingue os dois.
+  const isHardTarget = !ctx.deload && Boolean(slot.rpe);
+  const isSoftSuggestion = !isHardTarget && (ctx.deload || /leve/i.test(effSlot.note ?? ''));
+  const recommendedRpe = isHardTarget ? slot.rpe : isSoftSuggestion ? 6 : null;
   const rpeButtons = [6, 7, 8, 9, 10]
-    .map(
-      (v) =>
-        `<button class="rpe-btn${v === targetRpe ? ' target' : ''}" data-rpe="${v}">${v}</button>`
-    )
+    .map((v) => {
+      const cls = v === recommendedRpe ? ' target selected default' : '';
+      return `<button class="rpe-btn${cls}" data-rpe="${v}">${v}</button>`;
+    })
     .join('');
 
   return `
@@ -244,7 +248,7 @@ function slotCard(slot, ctx) {
       ${altRowHTML(slot, activeId)}
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
-      ${setChips(todays, unit, timed, targetRpe != null)}
+      ${setChips(todays, unit, timed)}
       ${returnLineHTML(effSlot, ctx)}
       <div class="unit-row">
         <span class="field-label">Carga (${unit})</span>
@@ -261,7 +265,9 @@ function slotCard(slot, ctx) {
         <input class="in-reps" type="text" inputmode="numeric" value="${prefReps}">
         <button class="step-btn" data-delta="${timed ? 5 : 1}" aria-label="Mais ${timed ? '5 segundos' : '1 rep'}">+</button>
       </div>
-      <label class="field-label">RPE ${targetRpe ? `(alvo ${targetRpe})` : '(opcional)'}</label>
+      <label class="field-label">RPE ${
+        isHardTarget ? `(alvo ${recommendedRpe})` : recommendedRpe != null ? `(sugestão ${recommendedRpe})` : '(opcional)'
+      }</label>
       <div class="rpe-row">${rpeButtons}<button class="rpe-btn" data-rpe="">—</button></div>
       <input class="notes-input ex-notes" type="text" placeholder="Notas do exercício (opcional)" maxlength="200" value="${esc(ctx.noteFor(activeId))}">
       <button class="log-btn">${done ? 'Registrar série extra' : `Registrar série ${todays.length + 1}/${effSets}`}</button>
@@ -487,9 +493,11 @@ export async function render(el, dayKey, logDate) {
 
     const rpeBtn = e.target.closest('.rpe-btn');
     if (rpeBtn) {
-      const wasSelected = rpeBtn.classList.contains('selected');
-      rpeBtn.parentElement.querySelectorAll('.rpe-btn').forEach((b) => b.classList.remove('selected'));
-      if (!wasSelected) rpeBtn.classList.add('selected');
+      // Um clique real sempre confirma o valor clicado — nunca desmarca por
+      // clique duplo (evita apagar o RPE default sem querer). Gravar sem
+      // RPE passa a exigir clicar explicitamente em "—".
+      rpeBtn.parentElement.querySelectorAll('.rpe-btn').forEach((b) => b.classList.remove('selected', 'default'));
+      rpeBtn.classList.add('selected');
       return;
     }
 

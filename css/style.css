@@ -301,9 +301,13 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
   font-weight: 700;
   font-size: 1rem;
 }
-/* Alvo é lembrete (tracejado, vazio) — selecionado de verdade é preenchido. */
+/* Alvo sem toque do usuário é lembrete (tracejado, vazio) — selecionado de
+   verdade (manual ou default aceito) é preenchido. */
 .rpe-btn.target { border: 1px dashed var(--accent); color: var(--accent); }
 .rpe-btn.selected { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
+/* Default pré-selecionado, ainda não confirmado por clique — preenchimento
+   leve e borda tracejada, pra não parecer uma escolha manual. */
+.rpe-btn.target.selected.default { background: var(--accent); opacity: 0.5; border: 1px dashed var(--accent); color: var(--accent-ink); }
 .set-chip .rpe-missing { color: var(--accent); font-weight: 700; }
 
 .notes-input {
