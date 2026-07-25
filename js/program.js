@@ -174,14 +174,16 @@ export const DAYS = {
   },
 };
 
-/* Dia da semana (Date.getDay(): 0 = domingo) → sessão */
+/* Dia da semana (Date.getDay(): 0 = domingo) → sessão.
+ * Natação (aeróbico) fixa em terça e quinta; pesados (A/B/C) isolados por
+ * aeróbico, D leve na segunda e sábado de folga. */
 export const WEEKDAYS = {
   0: 'barra-a',
-  1: 'aerobico',
-  2: 'barra-b',
-  3: 'aerobico',
-  4: 'barra-c',
-  5: 'barra-d',
+  1: 'barra-d',
+  2: 'aerobico',
+  3: 'barra-b',
+  4: 'aerobico',
+  5: 'barra-c',
   6: 'off',
 };
 
