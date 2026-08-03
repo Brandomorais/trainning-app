@@ -47,7 +47,7 @@ já produzem ganho de 1RM em powerlifters.
 |---|---|---|---|
 | Agacho | 8 (4x4@8 + 4x6@7) | búlgaro 3 | ✅ zona ótima para força; quadríceps ~11 p/ hipertrofia |
 | Supino | 9 (4x6@7 + 5x3@8) | fechado 3 + inclinado 4 | ✅ pressing total ~16, ótimo |
-| Terra | 6 (4x3@8 + 2x3@6 técnico) | stiff 3 | ✅ corrigido em 15/07 (era 4 séries, 1x/semana) |
+| Terra | 7 (4x3@8 + 3x4@6 técnico) | stiff 3 | ✅ 15/07 (era 4 séries, 1x/semana); técnico subiu 2×3→3×4 em 03/08 |
 | Costas (remadas/puxadas) | 11 | — | ✅ excelente p/ powerlifting |
 | Posteriores | 6 (stiff + mesa flexora) | terra | ✅ adequado |
 | Ombros | 3 + band pull-apart | pressing | ✅ suficiente dado o volume de press |
@@ -67,9 +67,17 @@ sugere supino 3-4x, agacho 2-3x e terra 2x por semana. Na meta-regressão de
 prática: treinar o movimento mais vezes melhora a habilidade.
 
 **No programa**: agacho 2x ✅ · supino 2x direto + 4 dias de pressing ✅ ·
-terra **2x** desde 15/07 (pesado na terça + 2x3@6 técnico na quinta) ✅ —
+terra **2x** desde 15/07 (pesado no Barra B + técnico @6 ~70% no Barra C) ✅ —
 era o único básico abaixo da sugestão observacional, corrigido com prática
 leve do movimento, que é o que a frequência compra para força.
+
+**Técnico subido de 2×3 para 3×4 @6 em 03/08/2026**: o total de terra vai a
+7 séries/semana — ainda na zona de força (terra é o básico mais caro em
+recuperação, então volume baixo é a recomendação: [3-5 séries pesadas/semana](https://legionathletics.com/how-many-sets-of-deadlifts-should-i-do/)
+bastam, e [blocos de força vivem logo acima do MEV](https://rpstrength.com/blogs/articles/training-volume-landmarks-muscle-growth)).
+2×3 era o piso de uma dose de frequência; 3×4 @6/70% adiciona reps de
+qualidade sem virar um 2º dia pesado, e reflete o que o usuário já executava
+na prática (a avaliação parcial do ciclo 1 pegou 5 reps @7 nesse slot).
 
 ## 3. Periodização
 

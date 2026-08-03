@@ -149,7 +149,7 @@ export const DAYS = {
     slots: [
       { exerciseId: 'supino', sets: 5, reps: 3, rpe: 8, rest: '3-4min', ramp: true },
       { exerciseId: 'agacho', sets: 4, reps: 6, rpe: 7, rest: '2-3min', note: 'volume' },
-      { exerciseId: 'terra', sets: 2, reps: 3, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da terça' },
+      { exerciseId: 'terra', sets: 3, reps: 4, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da terça' },
       { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min', alternatives: ['remada-cabo', 'remada-maquina'] },
     ],
   },
