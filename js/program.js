@@ -119,7 +119,6 @@ export const DAYS = {
       { exerciseId: 'supino', sets: 4, reps: 6, rpe: 7, rest: '2-3min' },
       { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min', alternatives: ['remada-cabo', 'remada-maquina'] },
       { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s', alternatives: ['hiperextensao', 'good-morning'] },
-      { exerciseId: 'dead-bug', sets: 3, reps: 10, rest: '60s', note: 'por lado', alternatives: ['prancha', 'ab-wheel'] },
     ],
   },
   'aerobico': {
@@ -166,6 +165,7 @@ export const DAYS = {
       { exerciseId: 'triceps-overhead', sets: 3, reps: 12, rest: '60s', alternatives: ['triceps-frances', 'triceps-testa'] },
       { exerciseId: 'rosca-inclinada', sets: 3, reps: 12, rest: '60s', alternatives: ['rosca-scott', 'biceps'] },
       { exerciseId: 'mesa-flexora', sets: 3, reps: 12, rest: '60s', alternatives: ['flexora-em-pe', 'nordic'] },
+      { exerciseId: 'dead-bug', sets: 3, reps: 10, rest: '60s', note: 'por lado', alternatives: ['prancha', 'ab-wheel'] },
     ],
   },
   'off': {
@@ -221,7 +221,14 @@ export const RPE_SCALE = [
   { rpe: 6, hint: '+4 ou mais' },
 ];
 
-/* Ciclo: semanas 1-4 normais + semana 5 de deload */
+/*
+ * Ciclo híbrido: semanas 1-4 normais + deload na 5ª por DEFAULT (sem ação,
+ * nada muda). O detector de fadiga só ajusta as bordas, dentro da janela
+ * 4-6 da literatura (Bell et al., docs §5): antecipar a partir da 4ª com
+ * ≥2 básicos sinalizando (≥1 estagnado), ou adiar a 5ª — teto duro na 6ª.
+ */
 export const CYCLE_WEEKS = 4;
+export const DELOAD_MIN_WEEK = 4;        // antecipação permitida a partir daqui
+export const DELOAD_MAX_WEEK = 6;        // deload adiado no máximo até aqui
 export const DELOAD_LOAD_FACTOR = 0.6;   // ~60% da carga
 export const FAIL_DELOAD_FACTOR = 0.9;   // falhou 2 semanas → -10%

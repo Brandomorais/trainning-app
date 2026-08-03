@@ -5,6 +5,7 @@
   "type": "module",
   "description": "PWA offline de controle de treino de powerlifting — dados 100% locais no aparelho.",
   "scripts": {
-    "dev": "npx -y serve -l 5173 ."
+    "dev": "npx -y serve -l 5173 .",
+    "test": "node --test"
   }
 }
