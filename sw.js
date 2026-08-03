@@ -7,7 +7,7 @@
  * CACHE_VERSION só precisa mudar em alterações estruturais (arquivo
  * renomeado/removido); edições normais chegam sozinhas via revalidação.
  */
-const CACHE_VERSION = 'treino-v4'; // v4: força atualização limpa (fix do vazamento de séries entre dias)
+const CACHE_VERSION = 'treino-v5'; // v5: barra de séries pendentes + aviso ao sair
 
 const ASSETS = [
   './',

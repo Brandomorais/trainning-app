@@ -195,6 +195,12 @@ details.warmup[open] summary::after { transform: rotate(90deg); }
 .ex-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .ex-head h2 { font-size: 1.1rem; }
 .ex-head .done-mark { color: var(--good); }
+.ex-head .pending-mark {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
 .prescription { color: var(--accent); font-weight: 700; white-space: nowrap; font-size: 0.95rem; }
 .ex-meta { margin-top: 2px; }
 .return-line {
@@ -470,3 +476,39 @@ input[type="date"] {
 }
 #tabs a.active { color: var(--accent); }
 #tabs .icon { font-size: 1.35rem; line-height: 1.2; }
+
+/* ---------- Barra de séries pendentes (dia de força) ---------- */
+/* Fixa logo acima da navegação; some sozinha quando não há incompletos. */
+.incomplete-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(23, 26, 33, 0.96);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-top: 2px solid var(--accent);
+}
+.incomplete-bar .ib-label { color: var(--accent); font-weight: 700; font-size: 0.85rem; }
+.ib-chips { display: flex; gap: 8px; overflow-x: auto; }
+.ib-chip {
+  flex: none;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--card-2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Espaço extra para o último card não ficar atrás da barra + navegação
+   (só quando a barra existe; :has some sozinho ao trocar de tela). */
+#view:has(.incomplete-bar) { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }

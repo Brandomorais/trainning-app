@@ -197,6 +197,20 @@ function altRowHTML(slot, activeId) {
   return `<div class="alt-row" data-slot="${slot.exerciseId}">${chips}</div>`;
 }
 
+/*
+ * Progresso de um slot no dia: exercício ativo, alvo de séries do dia
+ * (deload = metade) e quantas já foram registradas. Reusado pelo card, pela
+ * barra de pendências e pelo aviso de saída.
+ */
+function slotProgress(slot, ctx) {
+  const activeId = activeExerciseId(slot, ctx);
+  const effSets = ctx.deload ? Math.max(1, Math.ceil(slot.sets / 2)) : slot.sets;
+  const logged = ctx.logs.filter(
+    (l) => l.date === ctx.date && l.dayKey === ctx.dayKey && l.exerciseId === activeId
+  ).length;
+  return { activeId, name: EXERCISES[activeId].name, logged, target: effSets };
+}
+
 function slotCard(slot, ctx) {
   const activeId = activeExerciseId(slot, ctx);
   const ex = EXERCISES[activeId];
@@ -258,7 +272,13 @@ function slotCard(slot, ctx) {
       <div class="ex-head">
         <h2>${ex.name}
           <a class="video-link-inline" href="${youtubeURL(effSlot.query || effSlot.url ? effSlot : ex)}" target="_blank" rel="noopener" aria-label="Ver técnica no YouTube">▶</a>
-          ${done ? '<span class="done-mark">✓</span>' : ''}</h2>
+          ${
+            done
+              ? '<span class="done-mark">✓</span>'
+              : todays.length > 0
+                ? `<span class="pending-mark">faltam ${effSets - todays.length}</span>`
+                : ''
+          }</h2>
         <span class="prescription">${prescription}</span>
       </div>
       ${altRowHTML(slot, activeId)}
@@ -393,6 +413,13 @@ export async function render(el, dayKey, logDate) {
       : null;
   const ctx = { logs, cardio, date, deload, dayKey, lastLog, units, noteFor };
 
+  // Exercícios começados mas não terminados hoje — para a barra de pendências
+  // e o aviso ao sair. Só "started but incomplete": não alarma o não-começado.
+  const incomplete =
+    day.kind === 'lift'
+      ? day.slots.map((s) => slotProgress(s, ctx)).filter((p) => p.logged > 0 && p.logged < p.target)
+      : [];
+
   let body = '';
   if (day.kind === 'lift') {
     body = `
@@ -423,6 +450,15 @@ export async function render(el, dayKey, logDate) {
       <input type="date" id="log-date" value="${date}" max="${today}">
     </label>`;
 
+  const incompleteBar = incomplete.length
+    ? `<div class="incomplete-bar">
+        <span class="ib-label">⚠ Faltam séries</span>
+        <div class="ib-chips">${incomplete
+          .map((p) => `<button class="ib-chip" data-jump="${p.activeId}">${esc(p.name)} ${p.logged}/${p.target}</button>`)
+          .join('')}</div>
+      </div>`
+    : '';
+
   el.innerHTML = `
     <a class="back-link" href="#/treinos">‹ Treinos</a>
     <header class="page-head">
@@ -433,7 +469,8 @@ export async function render(el, dayKey, logDate) {
       ${weekBadge(wk)}
     </header>
     ${datePicker}
-    ${body}`;
+    ${body}
+    ${incompleteBar}`;
 
   const rerender = async () => {
     const sy = window.scrollY;
@@ -479,6 +516,22 @@ export async function render(el, dayKey, logDate) {
   };
 
   el.onclick = async (e) => {
+    // Barra de pendências: pular pro card do exercício incompleto.
+    const jump = e.target.closest('.ib-chip');
+    if (jump) {
+      el.querySelector(`.exercise[data-ex="${jump.dataset.jump}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // Aviso ao sair com séries pendentes (o link navega se confirmar).
+    const back = e.target.closest('.back-link');
+    if (back && incomplete.length) {
+      const lista = incomplete.map((p) => `${p.name} ${p.logged}/${p.target}`).join(', ');
+      if (!confirm(`Faltam séries: ${lista}. Sair mesmo assim?`)) e.preventDefault();
+      return;
+    }
+
     const stepBtn = e.target.closest('.step-btn');
     if (stepBtn) {
       const input = stepBtn.parentElement.querySelector('input');
