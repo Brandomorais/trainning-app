@@ -204,8 +204,11 @@ function slotCard(slot, ctx) {
   // descreve a execução do recomendado — não vale para os fallbacks.
   const effSlot =
     activeId === slot.exerciseId ? slot : { ...slot, exerciseId: activeId, note: null, query: null, url: null };
+  // Filtra também por dayKey: o mesmo exercício pode viver em dois dias do
+  // programa (agacho/supino em A e C, terra em B e C) — sem isso, as séries
+  // de um dia vazam para o slot do outro na mesma data.
   const todays = ctx.logs
-    .filter((l) => l.date === ctx.date && l.exerciseId === activeId)
+    .filter((l) => l.date === ctx.date && l.dayKey === ctx.dayKey && l.exerciseId === activeId)
     .sort((a, b) => a.createdAt - b.createdAt);
 
   const unit = ctx.units[activeId] ?? 'kg';
@@ -565,7 +568,7 @@ export async function render(el, dayKey, logDate) {
       const rpe = selectedRpe && selectedRpe.dataset.rpe !== '' ? parseFloat(selectedRpe.dataset.rpe) : null;
       const exerciseId = card.dataset.ex;
       const setNumber =
-        logs.filter((l) => l.date === date && l.exerciseId === exerciseId).length + 1;
+        logs.filter((l) => l.date === date && l.dayKey === dayKey && l.exerciseId === exerciseId).length + 1;
 
       clearTimeout(noteTimer);
       await saveNote(card); // nota digitada agora não se perde no rerender
