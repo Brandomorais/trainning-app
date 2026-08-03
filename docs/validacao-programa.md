@@ -52,7 +52,7 @@ já produzem ganho de 1RM em powerlifters.
 | Posteriores | 6 (stiff + mesa flexora) | terra | ✅ adequado |
 | Ombros | 3 + band pull-apart | pressing | ✅ suficiente dado o volume de press |
 | Tríceps / Bíceps | 3 / 3 | pressing / remadas | ✅ acessório clássico |
-| Core | 6 (2x/semana, dom+ter) | básicos | ✅ corrigido em 15/07 (era 3, 1x/semana) |
+| Core | 6 (2x/semana, Barra D + Barra B) | básicos | ✅ corrigido em 15/07 (era 3, 1x/semana); dead bug movido p/ Barra D em 31/07 |
 
 ## 2. Frequência
 
@@ -117,6 +117,38 @@ controlado, uma alternativa razoável é o deload *reativo* (fazer quando o
 detector de estagnação/fadiga acusar, tipicamente a cada 4-8 semanas). Manter
 fixo também é defensável — principalmente com 2 dias de natação e recuperação
 não sendo prioridade de sobra.
+
+### 5.1 Deload híbrido implementado (02/08/2026)
+
+O app passou a usar o modelo **híbrido**: a 5ª semana continua o default
+calendárico (sem nenhuma ação, nada muda), e o detector de fadiga só ajusta
+as bordas, dentro da janela 4-6 semanas — a faixa mais citada em Bell et al.:
+
+- **Antecipar**: a partir da semana 4, se ≥2 básicos pesados acusarem sinal
+  no detector de tendência (e ≥1 'estagnado'), o app oferece iniciar o
+  deload imediatamente (7 dias; depois recomeça a semana 1).
+- **Adiar**: entrando na 5ª semana com os 3 básicos 'ok' e nenhuma série de
+  deload registrada, o app oferece adiar 1 semana — **teto duro na 6ª**, sem
+  segundo adiamento.
+
+Por que não reativo puro: não há RCT comparando reativo vs. pré-planejado; em
+Bell et al. o pré-planejado é o padrão e o reativo é ajuste para fadiga
+inesperada; e um deload que depende só de confirmação em banner pode
+simplesmente nunca acontecer. O híbrido degrada graciosamente para o
+comportamento fixo anterior. Formato inalterado (60% carga, metade das
+séries, RPE default 6).
+
+Na mesma data, o algoritmo de sugestão ganhou correções de precisão
+(autorregulação — ver regras de ~2%/0,5 ponto de RPE em
+[Ripped Body](https://rippedbody.com/rpe/) e
+[MASS](https://massresearchreview.com/2023/05/22/rpe-and-rir-the-complete-guide/)):
+sessões de deload fora do histórico de sugestão; base de carga = topo de
+**trabalho** (≥2 séries — feeler/PR single não conta); RPE ≥ alvo+2 recua um
+degrau (antes só segurava); dobro de incremento agora exige 2 sessões fáceis
+seguidas; acessórios ganharam travas de estagnação (reps abaixo do piso 2x →
+−10% e reconstruir; 4 sessões sem somar reps → atenção). O recuo de −10% no
+acessório é prática comum de progressão dupla, sem RCT direto — mesma
+ressalva de honestidade do §8.1.
 
 ## 6. Acessórios
 
@@ -204,10 +236,20 @@ terça** (anti-rotação/lateral; prancha lateral como variação). Racional:
   treino de tronco dá efeito pequeno em força máxima (SMD 0,39), grande em
   resistência de tronco (1,29), moderado em performance (0,64), com ≥18
   sessões — as 6 séries semanais em 2 dias estão na dose certa, sem inflar.
-- Alocação por dia: dead bug tem carga espinhal ~zero (domingo já mói os
-  extensores com agacho+stiff); Pallof não adiciona compressão lombar após o
-  terra. Progressão em reps/qualidade; quando 3x12 ficar fácil, adicionar
-  resistência (elástico mais forte, anilha no peito).
+- Alocação por dia: dead bug tem carga espinhal ~zero e Pallof não adiciona
+  compressão lombar após o terra — ambos seguros como finalizadores. Progressão
+  em reps/qualidade; quando 3x12 ficar fácil, adicionar resistência (elástico
+  mais forte, anilha no peito).
+- **Dead bug movido para a Barra D (31/07/2026).** Saiu da Barra A (agacho
+  pesado) para o dia leve de acessórios; Pallof segue na Barra B. Racional: (1)
+  com volume equalizado, a distribuição semanal tem efeito desprezível em
+  hipertrofia/força ([dose-resposta, Pelland et al. 2024/25](https://pubmed.ncbi.nlm.nih.gov/41343037/)),
+  então o estímulo de core (2x/semana, 6 séries) não muda; (2) dead bug é
+  controle motor puro e fadiga degrada o controle postural
+  ([Sci Rep 2025](https://www.nature.com/articles/s41598-025-98284-6)) — feito
+  fresco na Barra D rende reps mais crisp que pré-fatigado após agacho+stiff;
+  (3) enxuga a Barra A para 4 exercícios. Custo: as duas sessões de core ficam
+  agrupadas seg (D) + qua (B), irrelevante pelo ponto (1).
 - **Escolhas não são unânimes — upgrade path.** Em EMG puro,
   [ab wheel rollout e elevação de pernas na barra ativam mais reto/oblíquos](https://pubmed.ncbi.nlm.nih.gov/16649890/)
   (Escamilla 2006) que dead bug/prancha. Dead bug e Pallof entram como degrau
@@ -263,9 +305,10 @@ ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
 
 5. **Calibrar o RPE**: uma vez por ciclo (fora do deload), levar a última série
    de um acessório até perto da falha para recalibrar a percepção de RIR.
-6. **Deload reativo**: com 2-3 ciclos de dados no app, experimentar ciclos de
-   5-6 semanas com deload disparado pelo detector de estagnação em vez de fixo
-   na 5ª — mantendo o formato atual (60% carga, metade das séries).
+6. ✅ **Deload reativo** — aplicado em 02/08/2026 na forma **híbrida** (§5.1):
+   semana 5 fixa continua o default, detector antecipa (4ª+) ou adia (teto na
+   6ª). O experimento de reativo puro fica dispensado; reavaliar o híbrido
+   com 2-3 ciclos de dados (~out/2026).
 7. **Corrida sempre leve** (se usada no lugar da natação), com cuidado na
    segunda, véspera do terra.
 8. **Se estagnar, cortar volume da sexta primeiro** — é o dia mais volumoso em
