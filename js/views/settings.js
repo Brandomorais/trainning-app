@@ -11,7 +11,7 @@ import {
   wipeAll,
   SCHEMA_VERSION,
 } from '../db.js';
-import { toISODate, lastSundayISO, cycleWeek } from '../progression.js';
+import { toISODate, lastSundayISO, cycleWeek, addDaysISO, formatDateShort } from '../progression.js';
 
 export async function render(el) {
   const [cycle, logs] = await Promise.all([getCycle(), getLogs()]);
@@ -19,8 +19,10 @@ export async function render(el) {
 
   const weekText = wk
     ? wk.deload
-      ? 'Semana atual: <b>DELOAD</b> (depois recomeça na semana 1)'
-      : `Semana atual: <b>${wk.week} de 4</b>`
+      ? `Semana atual: <b>DELOAD</b>${cycle?.deloadStart ? ` até ${formatDateShort(addDaysISO(cycle.deloadStart, 6))}` : ''} (depois recomeça na semana 1)`
+      : wk.delayed
+        ? `Semana atual: <b>${wk.week} — deload adiado</b> (deload começa ${formatDateShort(cycle.deloadStart)})`
+        : `Semana atual: <b>${wk.week} de 4</b>`
     : 'Ciclo ainda não definido.';
 
   el.innerHTML = `
@@ -28,12 +30,13 @@ export async function render(el) {
 
     <section class="card">
       <h2>Ciclo de treino</h2>
-      <p class="muted small" style="margin:6px 0 12px">4 semanas de progressão + 1 de deload. ${weekText}</p>
+      <p class="muted small" style="margin:6px 0 12px">4 semanas de progressão + deload na 5ª por padrão; o app sugere antecipar (fadiga, a partir da 4ª) ou adiar (teto na 6ª). ${weekText}</p>
       <label class="field">
         <span>Início do ciclo (domingo da semana 1)</span>
         <input type="date" id="cycle-start" value="${cycle?.startDate ?? ''}">
       </label>
       <button class="btn" id="cycle-restart">Reiniciar ciclo — semana 1 = último domingo</button>
+      ${cycle && !wk?.deload ? '<button class="btn" id="deload-manual">Iniciar deload agora (7 dias)</button>' : ''}
     </section>
 
     <section class="card">
@@ -87,6 +90,13 @@ export async function render(el) {
   el.onclick = async (e) => {
     if (e.target.id === 'cycle-restart') {
       await setCycle({ startDate: lastSundayISO() });
+      await render(el);
+      return;
+    }
+
+    if (e.target.id === 'deload-manual') {
+      if (!confirm('Iniciar deload agora? 7 dias a 60% da carga e metade das séries; depois o ciclo recomeça na semana 1.')) return;
+      await setCycle({ ...cycle, deloadStart: toISODate() });
       await render(el);
       return;
     }

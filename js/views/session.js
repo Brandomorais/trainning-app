@@ -27,8 +27,10 @@ import {
 import {
   toISODate,
   formatDateLong,
+  formatDateShort,
   cycleWeek,
   advise,
+  lastTopSummary,
   parseTime,
   formatTime,
   paceFor,
@@ -50,9 +52,9 @@ const parseNum = (v) => {
 
 function weekBadge(wk) {
   if (!wk) return '<span class="badge">Ciclo não definido</span>';
-  return wk.deload
-    ? '<span class="badge badge-deload">DELOAD</span>'
-    : `<span class="badge">Semana ${wk.week}/4</span>`;
+  if (wk.deload) return '<span class="badge badge-deload">DELOAD</span>';
+  if (wk.delayed) return `<span class="badge">Semana ${wk.week} — deload adiado</span>`;
+  return `<span class="badge">Semana ${wk.week}/4</span>`;
 }
 
 const videoRow = (item, cls = '') =>
@@ -225,6 +227,17 @@ function slotCard(slot, ctx) {
       (slot.rpe && !ctx.deload ? ` @RPE${slot.rpe}` : '') +
       (effSlot.note ? ` (${effSlot.note})` : '');
 
+  // Alternativa sem histórico próprio: referência do titular no mesmo dia do
+  // programa (só texto — alavancas variam demais para pré-preencher número).
+  let refLine = '';
+  if (activeId !== slot.exerciseId && adv.weight == null && !timed) {
+    const refUnit = ctx.units[slot.exerciseId] ?? 'kg';
+    const ref = lastTopSummary(ctx.logs, slot.exerciseId, ctx.dayKey, ctx.date);
+    if (ref) {
+      refLine = `<p class="muted small">Referência: ${EXERCISES[slot.exerciseId].name} ${displayWeight(ref.weight, refUnit)}${refUnit}×${ref.reps} (${formatDateShort(ref.date)})</p>`;
+    }
+  }
+
   // Alvo real do programa vs sugestão inferida (deload / execução "leve") —
   // ambos pré-selecionam um RPE default, mas o label distingue os dois.
   const isHardTarget = !ctx.deload && Boolean(slot.rpe);
@@ -248,6 +261,7 @@ function slotCard(slot, ctx) {
       ${altRowHTML(slot, activeId)}
       <p class="muted small ex-meta">Descanso ${slot.rest}${slot.ramp ? ' · rampa antes da 1ª série' : ''}</p>
       <p class="hint${hintCls}">${adv.text}</p>
+      ${refLine}
       ${setChips(todays, unit, timed)}
       ${returnLineHTML(effSlot, ctx)}
       <div class="unit-row">

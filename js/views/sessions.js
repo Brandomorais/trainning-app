@@ -5,13 +5,37 @@
  */
 import { DAYS, WEEKDAYS } from '../program.js';
 import { getLogs, getCardio, getCycle, setCycle, setSelectedSession } from '../db.js';
-import { toISODate, lastSundayISO, cycleWeek, formatDateLong } from '../progression.js';
+import {
+  toISODate,
+  lastSundayISO,
+  cycleWeek,
+  deloadAdvice,
+  formatDateLong,
+  formatDateShort,
+} from '../progression.js';
 
 function weekBadge(wk) {
   if (!wk) return '<span class="badge">Ciclo não definido</span>';
-  return wk.deload
-    ? '<span class="badge badge-deload">DELOAD</span>'
-    : `<span class="badge">Semana ${wk.week}/4</span>`;
+  if (wk.deload) return '<span class="badge badge-deload">DELOAD</span>';
+  if (wk.delayed) return `<span class="badge">Semana ${wk.week} — deload adiado</span>`;
+  return `<span class="badge">Semana ${wk.week}/4</span>`;
+}
+
+/* Banner do deload híbrido: antecipar (fadiga) ou adiar (semana 5 limpa). */
+function deloadBannerHTML(advice) {
+  if (!advice) return '';
+  if (advice.type === 'antecipar') {
+    return `
+      <div class="banner-info">
+        Fadiga acumulada: ${advice.signals.join(' · ')}. A literatura recomenda deload dentro da janela de 4-6 semanas.
+        <button class="btn btn-primary" id="deload-now" data-start="${advice.deloadStart}" style="margin-top:10px">Antecipar deload (7 dias a partir de hoje)</button>
+      </div>`;
+  }
+  return `
+    <div class="banner-info">
+      Semana de deload, mas sem sinais de fadiga nos básicos — dá para adiar 1 semana (teto: 6ª).
+      <button class="btn" id="deload-delay" data-start="${advice.deloadStart}" style="margin-top:10px">Adiar deload para ${formatDateShort(advice.deloadStart)}</button>
+    </div>`;
 }
 
 function cardHTML(key, { doneKeys, todayKey }) {
@@ -52,6 +76,7 @@ export async function render(el) {
 
   const ctx = { doneKeys, todayKey };
   const others = Object.keys(DAYS).filter((k) => k !== todayKey);
+  const advice = cycle ? deloadAdvice(logs, cycle, date) : null;
 
   el.innerHTML = `
     <header class="page-head">
@@ -66,6 +91,7 @@ export async function render(el) {
         Defina o início do ciclo para o app contar as semanas (1-4 + deload).
         <button class="btn btn-primary" id="start-cycle" style="margin-top:10px">Iniciar ciclo — semana 1 começa no último domingo</button>
       </div>`}
+    ${deloadBannerHTML(advice)}
     <p class="list-label">★ Hoje</p>
     ${cardHTML(todayKey, ctx)}
     <p class="list-label">Todos os treinos</p>
@@ -82,6 +108,13 @@ export async function render(el) {
     }
     if (e.target.closest('#start-cycle')) {
       await setCycle({ startDate: lastSundayISO() });
+      await render(el);
+      return;
+    }
+    // Deload híbrido: antecipar/adiar gravam deloadStart no ciclo.
+    const deloadBtn = e.target.closest('#deload-now, #deload-delay');
+    if (deloadBtn) {
+      await setCycle({ ...cycle, deloadStart: deloadBtn.dataset.start });
       await render(el);
     }
   };
