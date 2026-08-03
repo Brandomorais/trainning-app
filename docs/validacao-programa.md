@@ -169,6 +169,23 @@ perna, simetria, menos carga axial no dia sem PR — o leg press era o acessóri
 mais redundante com agacho 2x/semana) e **core subiu para 2x/semana**
 (dom + ter). O leg press segue definido no `program.js` para eventual rodízio.
 
+### 6.1 Remadas trocadas de dia (03/08/2026)
+
+A **remada unilateral** (apoiada) foi para o **Barra A** (agacho pesado) e a
+**remada curvada** (barra) foi para o **Barra C** (supino pesado) — troca de
+dia, sem mudar os movimentos da semana. Racional: o Barra A empilhava agacho
+@8 + remada curvada + stiff, três cargas na lombar/eretores e duas na pegada
+(curvada + stiff) no mesmo dia — a avaliação parcial do ciclo 1 já flagrava
+"a pegada falha antes do posterior" no stiff. A remada apoiada tira a carga
+lombar e de pegada do dia mais pesado; a curvada foi para o dia de supino,
+onde pareia empurrar/puxar horizontal e a base lombar é mais leve (agacho
+volume @7 + terra técnico @6). Cada remada manteve sua prescrição e
+alternativas (4×8 bilateral · 3×10 unilateral). Os três padrões de puxada
+(curvada, pulldown, unilateral) seguem na semana — só mudaram de dia.
+Efeito colateral aceito: como o `advise()` isola por dia, a sugestão de
+carga de cada remada recomeça do zero no novo dia (histórico preservado,
+só não alimenta mais a sugestão ali).
+
 ## 7. Treino concorrente (natação/corrida + força)
 
 O "interference effect" encolheu conforme a pesquisa melhorou:

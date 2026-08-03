@@ -117,7 +117,7 @@ export const DAYS = {
     slots: [
       { exerciseId: 'agacho', sets: 4, reps: 4, rpe: 8, rest: '3-5min', ramp: true },
       { exerciseId: 'supino', sets: 4, reps: 6, rpe: 7, rest: '2-3min' },
-      { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min', alternatives: ['remada-cabo', 'remada-maquina'] },
+      { exerciseId: 'remada-unilateral', sets: 3, reps: 10, rest: '90s', alternatives: ['remada-cabo-uni', 'remada-maq-uni'] },
       { exerciseId: 'stiff', sets: 3, reps: 10, rest: '60-90s', alternatives: ['hiperextensao', 'good-morning'] },
     ],
   },
@@ -150,7 +150,7 @@ export const DAYS = {
       { exerciseId: 'supino', sets: 5, reps: 3, rpe: 8, rest: '3-4min', ramp: true },
       { exerciseId: 'agacho', sets: 4, reps: 6, rpe: 7, rest: '2-3min', note: 'volume' },
       { exerciseId: 'terra', sets: 2, reps: 3, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da terça' },
-      { exerciseId: 'remada-unilateral', sets: 3, reps: 10, rest: '90s', alternatives: ['remada-cabo-uni', 'remada-maq-uni'] },
+      { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min', alternatives: ['remada-cabo', 'remada-maquina'] },
     ],
   },
   'barra-d': {
