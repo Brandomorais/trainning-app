@@ -46,7 +46,9 @@ renomear/remover arquivos.
 
 Ciclo de 4 semanas + deload na 5ª (~60% da carga, metade das séries, sem RPE
 alto). Ajustado em jul/2026 com base na literatura — pesquisa e fontes em
-[`docs/validacao-programa.md`](docs/validacao-programa.md).
+[`docs/validacao-programa.md`](docs/validacao-programa.md). Sobre seleção de
+variações (barra alta vs baixa, pausa, supino de perna esticada):
+[`docs/variacoes-agacho-supino.md`](docs/variacoes-agacho-supino.md).
 
 | Dia | Sessão | Prescrição |
 |---|---|---|
