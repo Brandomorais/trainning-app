@@ -6,6 +6,7 @@ import { EXERCISES, DAYS, CARDIO_MODALITIES } from '../program.js';
 import { getLogs, getCardio, getSettings, getExerciseNotes } from '../db.js';
 import {
   sessionsFor,
+  sessionsByDay,
   bestE1RM,
   epley,
   fmtWeight,
@@ -23,6 +24,11 @@ import {
 import { renderLineChart, renderBarChart } from '../components/chart.js';
 
 let selectedEx = null;
+
+/* Lista de sessões paginada: a página inteira era grande demais para achar
+ * qualquer coisa. Volta ao início sempre que o exercício muda. */
+const LIST_PAGE = 5;
+let expandedList = false;
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -75,13 +81,22 @@ function resumoHTML(logs) {
 function strengthDetail(logs, unit, exNotes) {
   const sessions = sessionsFor(logs, selectedEx);
 
-  const points = sessions.map((s) => ({
-    label: formatDateShort(s.date),
-    value: Math.round(displayWeight(bestE1RM(s.sets), unit) * 10) / 10,
-    deload: s.sets.some((x) => x.isDeload),
+  // Uma série por prescrição: agacho pesado (Barra A) e volume (Barra C) são
+  // progressões diferentes e não podem dividir a mesma linha.
+  const groups = sessionsByDay(logs, selectedEx);
+  const series = groups.map((g) => ({
+    // Só "Barra C", não "Barra C — Supino pesado": o nome cheio do dia cita o
+    // levantamento-título dele, que num gráfico de agacho seria ruído.
+    name: g.slot ? `${curtoDia(g.name)} · ${prescricaoCurta(g.slot)}` : curtoDia(g.name),
+    points: g.sessions.map((s) => ({
+      x: s.date,
+      label: formatDateShort(s.date),
+      value: Math.round(displayWeight(bestE1RM(s.sets), unit) * 10) / 10,
+      deload: s.sets.some((x) => x.isDeload),
+    })),
   }));
 
-  const bestOverall = Math.max(...points.map((p) => p.value));
+  const bestOverall = Math.max(...series.flatMap((s) => s.points.map((p) => p.value)));
   const maxWeight = Math.max(...sessions.flatMap((s) => s.sets.map((x) => x.weight)));
 
   // Tendência por prescrição (só levantamentos principais): agacho pesado
@@ -108,8 +123,11 @@ function strengthDetail(logs, unit, exNotes) {
       .join('');
   }
 
-  const sessionList = [...sessions]
-    .reverse()
+  const ordered = [...sessions].reverse();
+  const shown = expandedList ? ordered : ordered.slice(0, LIST_PAGE);
+  const rest = ordered.length - shown.length;
+
+  const sessionList = shown
     .map((s) => {
       const isDeload = s.sets.some((x) => x.isDeload);
       const dayNote = exNotes
@@ -135,19 +153,59 @@ function strengthDetail(logs, unit, exNotes) {
 
   const html = `
     <div class="stat-row">
-      <div class="stat">Melhor e1RM<b>${fmt1(bestOverall)} ${unit}</b></div>
-      <div class="stat">Maior carga<b>${fmtWeight(maxWeight, unit)}</b></div>
-      <div class="stat">Sessões<b>${sessions.length}</b></div>
+      <div class="stat">Melhor e1RM<b>${fmt1(bestOverall)} ${unit}</b><span class="pr-sub">estimativa</span></div>
+      <div class="stat">Maior carga<b>${fmtWeight(maxWeight, unit)}</b><span class="pr-sub">peso real na barra</span></div>
+      <div class="stat">Sessões<b>${sessions.length}</b><span class="pr-sub">com registro</span></div>
     </div>
     ${trendHTML}
     <section class="card chart-card">
       <h2>e1RM por sessão — ${EXERCISES[selectedEx].name}</h2>
-      <p class="chart-sub">Epley: carga × (1 + reps/30) · melhor série do dia · ${unit} · ○ = deload</p>
+      <p class="chart-sub">Força estimada para 1 repetição, a partir da melhor série do dia — é o que
+        permite comparar dias de reps diferentes. Em ${unit} · ○ = deload.</p>
       <div class="chart-wrap" id="detail-chart"></div>
     </section>
-    ${sessionList}`;
+    ${e1rmHelpHTML(series.length)}
+    <p class="list-label">Sessões</p>
+    ${sessionList}
+    ${rest ? `<button class="btn btn-more" id="list-more">Ver mais (${rest} restante${rest === 1 ? '' : 's'})</button>` : ''}`;
 
-  return { html, mount: (el) => renderLineChart(el.querySelector('#detail-chart'), points) };
+  return { html, mount: (el) => renderLineChart(el.querySelector('#detail-chart'), series) };
+}
+
+/* Prescrição em forma curta para rotular a série: "4x4 @8". */
+function prescricaoCurta(slot) {
+  return `${slot.sets}x${slot.reps ?? ''}${slot.rpe ? ` @${slot.rpe}` : ''}`;
+}
+
+/* "Barra C — Supino pesado" → "Barra C". */
+const curtoDia = (name) => name.split('—')[0].trim();
+
+/*
+ * O e1RM é o número que manda na tela toda e nunca era explicado — só a
+ * fórmula aparecia. Fica recolhido para não pesar em quem já sabe.
+ */
+function e1rmHelpHTML(seriesCount) {
+  return `
+    <details class="warmup card helper">
+      <summary>O que é e1RM?</summary>
+      <p><b>e1RM</b> é a carga estimada para uma única repetição máxima — uma
+      <em>estimativa</em> calculada, não um teste feito. Serve para comparar
+      sessões de prescrições diferentes: 75×4 e 65×6 viram números na mesma
+      régua.</p>
+      <p>A conta é a fórmula de Epley: <code>carga × (1 + reps/30)</code>,
+      sempre pela melhor série do dia. Ela perde precisão acima de ~10 reps,
+      então em acessório leve leia como tendência, não como número exato.</p>
+      <p><b>Melhor e1RM</b> é estimado; <b>maior carga</b> é o peso que
+      realmente esteve na barra. Marcador vazado (○) é semana de deload — carga
+      baixa de propósito, não queda de desempenho.</p>
+      ${
+        seriesCount > 1
+          ? `<p>As linhas são separadas por prescrição: o mesmo exercício pesado
+             e em volume progride em ritmos diferentes, e somar os dois numa
+             linha só faz progresso limpo parecer instabilidade.</p>`
+          : ''
+      }
+    </details>`;
 }
 
 /* ---------- Detalhe de modalidade aeróbica ---------- */
@@ -256,7 +314,10 @@ export async function render(el) {
     return;
   }
 
-  if (!all.includes(selectedEx)) selectedEx = all[0];
+  if (!all.includes(selectedEx)) {
+    selectedEx = all[0];
+    expandedList = false;
+  }
 
   const options = [
     ...strengthIds.map(
@@ -293,6 +354,14 @@ export async function render(el) {
   el.onchange = async (e) => {
     if (e.target.id === 'ex-select') {
       selectedEx = e.target.value;
+      expandedList = false;
+      await render(el);
+    }
+  };
+
+  el.onclick = async (e) => {
+    if (e.target.closest('#list-more')) {
+      expandedList = true;
       await render(el);
     }
   };

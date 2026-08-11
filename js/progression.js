@@ -290,6 +290,36 @@ export function sessionsFor(logs, exerciseId) {
     }));
 }
 
+/*
+ * O mesmo exercício vive em prescrições diferentes (agacho pesado na Barra A e
+ * volume na Barra C, terra pesado na B e técnico na C). Misturá-las numa série
+ * só transforma duas progressões limpas num serrote — este agrupamento é o que
+ * mantém cada prescrição na sua própria linha.
+ *
+ * Retorna [{ dayKey, name, slot, sessions }] na ordem de declaração de DAYS —
+ * ordem estável de propósito: a cor da série segue a entidade, nunca o ranking
+ * de quantidade de dados. `dayKey` sem slot correspondente (registro avulso, ou
+ * dia que saiu do programa) vira grupo próprio em vez de sujar outra linha.
+ */
+export function sessionsByDay(logs, exerciseId) {
+  const order = Object.keys(DAYS);
+  const seen = [...new Set(logs.filter((l) => l.exerciseId === exerciseId).map((l) => l.dayKey))];
+  seen.sort((a, b) => {
+    const [ia, ib] = [order.indexOf(a), order.indexOf(b)];
+    if (ia !== ib) return (ia < 0 ? Infinity : ia) - (ib < 0 ? Infinity : ib);
+    return a < b ? -1 : 1;
+  });
+  return seen.map((dayKey) => ({
+    dayKey,
+    name: DAYS[dayKey]?.name ?? dayKey,
+    slot: (DAYS[dayKey]?.slots ?? []).find((s) => s.exerciseId === exerciseId) ?? null,
+    sessions: sessionsFor(
+      logs.filter((l) => l.dayKey === dayKey),
+      exerciseId
+    ),
+  }));
+}
+
 export function bestE1RM(sets) {
   return Math.max(0, ...sets.map((s) => epley(s.weight, s.reps)));
 }

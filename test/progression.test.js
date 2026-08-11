@@ -12,6 +12,7 @@ import {
   lastTopSummary,
   addDaysISO,
   restCountdown,
+  sessionsByDay,
 } from '../js/progression.js';
 
 /* ---------- Helpers de fixture ---------- */
@@ -297,4 +298,63 @@ test('restCountdown: contagem regressiva arredonda para cima (nunca 0:00 esperan
   const r = restCountdown(t, t, '60s', t - 200);
   assert.equal(r.state, 'waiting');
   assert.match(r.text, /^⏱ 0:01 /);
+});
+
+/* ---------- sessionsByDay ---------- */
+
+test('sessionsByDay separa o mesmo exercício por prescrição', () => {
+  const logs = [
+    ...sets(4, '2026-07-19', 'agacho', 70, 4, { dayKey: 'barra-a' }),
+    ...sets(4, '2026-07-24', 'agacho', 50, 6, { dayKey: 'barra-c' }),
+    ...sets(4, '2026-07-26', 'agacho', 75, 4, { dayKey: 'barra-a' }),
+  ];
+  const g = sessionsByDay(logs, 'agacho');
+  assert.deepEqual(g.map((x) => x.dayKey), ['barra-a', 'barra-c']);
+  assert.equal(g[0].sessions.length, 2);
+  assert.equal(g[1].sessions.length, 1);
+  // o slot correto vem junto, para rotular a série com a prescrição
+  assert.equal(g[0].slot.reps, 4);
+  assert.equal(g[1].slot.reps, 6);
+});
+
+test('sessionsByDay: ordem segue DAYS, não o volume de dados', () => {
+  // barra-c tem muito mais sessões, mas barra-a vem primeiro (cor estável).
+  const logs = [
+    ...sets(4, '2026-07-17', 'agacho', 50, 6, { dayKey: 'barra-c' }),
+    ...sets(4, '2026-07-24', 'agacho', 55, 6, { dayKey: 'barra-c' }),
+    ...sets(4, '2026-08-01', 'agacho', 60, 6, { dayKey: 'barra-c' }),
+    ...sets(4, '2026-07-26', 'agacho', 70, 4, { dayKey: 'barra-a' }),
+  ];
+  assert.deepEqual(sessionsByDay(logs, 'agacho').map((x) => x.dayKey), ['barra-a', 'barra-c']);
+});
+
+test('sessionsByDay: exercício de um dia só retorna um grupo (sem legenda)', () => {
+  const logs = sets(4, '2026-07-22', 'puxada', 50, 10, { dayKey: 'barra-b' });
+  const g = sessionsByDay(logs, 'puxada');
+  assert.equal(g.length, 1);
+  assert.equal(g[0].dayKey, 'barra-b');
+});
+
+test('sessionsByDay: registro em dia sem slot vira grupo próprio, no fim', () => {
+  // dead bug logado avulso na barra-a (onde não há slot dele) não pode sujar
+  // a linha da barra-d, que é a prescrição de verdade.
+  const logs = [
+    ...sets(3, '2026-08-03', 'dead-bug', 0, 10, { dayKey: 'barra-d' }),
+    ...sets(2, '2026-07-28', 'dead-bug', 0, 10, { dayKey: 'barra-a' }),
+  ];
+  const g = sessionsByDay(logs, 'dead-bug');
+  assert.deepEqual(g.map((x) => x.dayKey), ['barra-a', 'barra-d']);
+  assert.equal(g[0].slot, null); // barra-a não tem slot de dead bug
+  assert.ok(g[1].slot); // barra-d tem
+});
+
+test('sessionsByDay: dayKey desconhecido não quebra e vai para o fim', () => {
+  const logs = [
+    ...sets(4, '2026-07-19', 'agacho', 70, 4, { dayKey: 'barra-a' }),
+    ...sets(4, '2026-07-20', 'agacho', 70, 4, { dayKey: 'dia-que-nao-existe' }),
+  ];
+  const g = sessionsByDay(logs, 'agacho');
+  assert.deepEqual(g.map((x) => x.dayKey), ['barra-a', 'dia-que-nao-existe']);
+  assert.equal(g[1].name, 'dia-que-nao-existe');
+  assert.equal(g[1].slot, null);
 });

@@ -1,5 +1,5 @@
 /*
- * Gráfico de linha SVG para progressão de e1RM — série única.
+ * Gráfico de linha SVG para progressão de e1RM — uma ou mais séries.
  * Marcas: linha 2px, marcadores r=4.5 com anel de 2px na cor da superfície,
  * gridlines hairline sólidas, texto de eixo em cinza recessivo.
  * Interação: tocar/arrastar mostra crosshair + tooltip do ponto mais próximo.
@@ -26,18 +26,41 @@ function niceTicks(min, max, target = 4) {
 const defaultFmtValue = (v) => `${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} kg`;
 const defaultFmtTick = (t) => t.toLocaleString('pt-BR');
 
+/* Ordem categórica fixa, nunca ciclada: a cor segue a entidade, não o ranking.
+ * Passos validados para a superfície escura do card (ver :root no style.css). */
+const SERIES_VARS = ['var(--series-1)', 'var(--series-2)'];
+
 /**
- * points: [{ label, value, deload }] em ordem cronológica.
+ * data: uma série — [{ label, value, deload, x? }] — ou várias:
+ *       [{ name, points: [...] }, ...].
  * opts: { fmtValue (tooltip), fmtTick (eixo y), ariaLabel }.
+ *
+ * Com várias séries o eixo x é COMPARTILHADO: o domínio é a união ordenada dos
+ * `x` (ou `label`, se não houver `x`), e cada ponto é posicionado pelo índice
+ * nele. Sem isso, duas séries com datas diferentes ficariam desalinhadas no
+ * tempo — cada uma esticada sobre a própria contagem de pontos.
+ *
  * Renderiza dentro de `container` (limpa o conteúdo) e liga a interação.
  */
-export function renderLineChart(container, points, opts = {}) {
+export function renderLineChart(container, data, opts = {}) {
   const fmtValue = opts.fmtValue ?? defaultFmtValue;
   const fmtTick = opts.fmtTick ?? defaultFmtTick;
   container.innerHTML = '';
-  if (!points.length) return;
+  if (!data?.length) return;
 
-  const values = points.map((p) => p.value);
+  const multi = Array.isArray(data[0]?.points);
+  const series = multi ? data.filter((s) => s.points.length) : [{ name: null, points: data }];
+  if (!series.length) return;
+
+  const all = series.flatMap((s) => s.points);
+  const keyOf = (p) => p.x ?? p.label;
+
+  // Domínio de x: união ordenada das chaves de todas as séries.
+  const domain = [...new Set(all.map(keyOf))].sort();
+  const labelOf = new Map(all.map((p) => [keyOf(p), p.label]));
+  const idxOf = new Map(domain.map((k, i) => [k, i]));
+
+  const values = all.map((p) => p.value);
   let vMin = Math.min(...values);
   let vMax = Math.max(...values);
   const padV = Math.max((vMax - vMin) * 0.12, 2);
@@ -51,7 +74,8 @@ export function renderLineChart(container, points, opts = {}) {
 
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
-  const x = (i) => (points.length === 1 ? PAD.left + plotW / 2 : PAD.left + (i / (points.length - 1)) * plotW);
+  const x = (i) => (domain.length === 1 ? PAD.left + plotW / 2 : PAD.left + (i / (domain.length - 1)) * plotW);
+  const px = (p) => x(idxOf.get(keyOf(p)));
   const y = (v) => PAD.top + plotH - ((v - vMin) / (vMax - vMin)) * plotH;
 
   const grid = ticks
@@ -62,29 +86,52 @@ export function renderLineChart(container, points, opts = {}) {
     .join('');
 
   // Rótulos de x: primeiro, meio e último (sem poluir).
-  const xIdx = points.length <= 3
-    ? points.map((_, i) => i)
-    : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+  const xIdx = domain.length <= 3
+    ? domain.map((_, i) => i)
+    : [0, Math.floor((domain.length - 1) / 2), domain.length - 1];
   const xLabels = [...new Set(xIdx)]
     .map((i) => {
-      const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
-      return `<text x="${x(i)}" y="${H - 8}" text-anchor="${anchor}" font-size="11" fill="var(--axis-ink)">${points[i].label}</text>`;
+      const anchor = i === 0 ? 'start' : i === domain.length - 1 ? 'end' : 'middle';
+      return `<text x="${x(i)}" y="${H - 8}" text-anchor="${anchor}" font-size="11" fill="var(--axis-ink)">${labelOf.get(domain[i])}</text>`;
     })
     .join('');
 
-  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
+  const color = (si) => SERIES_VARS[si] ?? SERIES_VARS[SERIES_VARS.length - 1];
+
+  const paths = series
+    .map((s, si) => {
+      const d = s.points.map((p, i) => `${i === 0 ? 'M' : 'L'}${px(p).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
+      return `<path d="${d}" fill="none" stroke="${color(si)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    })
+    .join('');
 
   // Anel de 2px na cor da superfície por baixo de cada marcador (legível sobre a linha);
   // deload = marcador vazado (identidade além da cor).
-  const dots = points
-    .map((p, i) => {
-      const cx = x(i).toFixed(1);
-      const cy = y(p.value).toFixed(1);
-      const fill = p.deload ? 'var(--card)' : 'var(--series-1)';
-      return `<circle cx="${cx}" cy="${cy}" r="6.5" fill="var(--card)"/>` +
-        `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${fill}" stroke="var(--series-1)" stroke-width="2"/>`;
-    })
+  const dots = series
+    .map((s, si) =>
+      s.points
+        .map((p) => {
+          const cx = px(p).toFixed(1);
+          const cy = y(p.value).toFixed(1);
+          const fill = p.deload ? 'var(--card)' : color(si);
+          return `<circle cx="${cx}" cy="${cy}" r="6.5" fill="var(--card)"/>` +
+            `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${fill}" stroke="${color(si)}" stroke-width="2"/>`;
+        })
+        .join('')
+    )
     .join('');
+
+  // Legenda a partir de 2 séries — identidade nunca depende só da cor. Com 1
+  // série o título do card já a nomeia, então nada de caixa de legenda.
+  const legend =
+    series.length > 1
+      ? `<div class="chart-legend">${series
+          .map(
+            (s, si) =>
+              `<span><i style="background:${color(si)}"></i>${s.name}</span>`
+          )
+          .join('')}</div>`
+      : '';
 
   container.innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.ariaLabel ?? 'Progressão de e1RM'}">
@@ -92,11 +139,12 @@ export function renderLineChart(container, points, opts = {}) {
       <line x1="${PAD.left}" x2="${W - PAD.right}" y1="${PAD.top + plotH}" y2="${PAD.top + plotH}" stroke="var(--border)" stroke-width="1"/>
       ${yLabels}
       ${xLabels}
-      <path d="${path}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${paths}
       <line class="crosshair" x1="0" x2="0" y1="${PAD.top}" y2="${PAD.top + plotH}" stroke="var(--axis-ink)" stroke-width="1" visibility="hidden"/>
       ${dots}
     </svg>
     <div class="chart-tip"></div>
+    ${legend}
   `;
 
   const svg = container.querySelector('svg');
@@ -106,19 +154,24 @@ export function renderLineChart(container, points, opts = {}) {
   function showNearest(clientX) {
     const rect = svg.getBoundingClientRect();
     const relX = ((clientX - rect.left) / rect.width) * W;
-    let best = 0;
+    let best = null;
     let bestDist = Infinity;
-    points.forEach((_, i) => {
-      const d = Math.abs(x(i) - relX);
-      if (d < bestDist) { bestDist = d; best = i; }
+    series.forEach((s, si) => {
+      s.points.forEach((p) => {
+        const d = Math.abs(px(p) - relX);
+        if (d < bestDist) { bestDist = d; best = { p, si }; }
+      });
     });
-    const p = points[best];
-    cross.setAttribute('x1', x(best));
-    cross.setAttribute('x2', x(best));
+    if (!best) return;
+    const { p, si } = best;
+    const at = px(p);
+    cross.setAttribute('x1', at);
+    cross.setAttribute('x2', at);
     cross.setAttribute('visibility', 'visible');
-    tip.innerHTML = `${p.label}${p.deload ? ' · deload' : ''}<br><b>${fmtValue(p.value)}</b>`;
+    const who = series.length > 1 ? `${series[si].name} · ` : '';
+    tip.innerHTML = `${who}${p.label}${p.deload ? ' · deload' : ''}<br><b>${fmtValue(p.value)}</b>`;
     tip.style.display = 'block';
-    const fx = (x(best) / W) * rect.width;
+    const fx = (at / W) * rect.width;
     tip.style.left = `${Math.min(Math.max(fx, 55), rect.width - 55)}px`;
   }
 

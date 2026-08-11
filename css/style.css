@@ -14,8 +14,11 @@
   --danger: #ef6b6b;
   --danger-bg: #3a1d1d;
   --good: #4cc38a;
-  /* Gráfico (série validada p/ superfície escura) */
+  /* Gráfico — ordem categórica fixa, passos validados p/ superfície escura
+   * (--card): CVD ΔE 26,8 entre as duas, contraste ≥3:1. --accent fica de
+   * fora de propósito: é cor de estado (atenção), não de série. */
   --series-1: #3987e5;
+  --series-2: #d95926;
   --grid: #262b34;
   --axis-ink: #898781;
 }
@@ -432,6 +435,32 @@ input[type="date"] {
   display: none;
 }
 .chart-tip b { font-variant-numeric: tabular-nums; }
+
+/* Legenda: só a partir de 2 séries. O rótulo usa tinta de texto — quem carrega
+ * a identidade é o marcador colorido ao lado, nunca a cor da fonte. */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 2px 0 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend i { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.btn-more { width: 100%; margin-top: 2px; }
+
+/* Explicador recolhido (reusa o visual do card de aquecimento). */
+details.helper { margin: 14px 0; }
+details.helper p { font-size: 0.87rem; color: var(--muted); margin-top: 8px; line-height: 1.45; }
+details.helper b { color: var(--text); }
+details.helper code {
+  background: var(--card-2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
 
 .session { margin-bottom: 16px; }
 .session h3 { font-size: 0.9rem; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
