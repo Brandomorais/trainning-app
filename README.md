@@ -52,19 +52,19 @@ variações (barra alta vs baixa, pausa, supino de perna esticada):
 
 | Dia | Sessão | Prescrição |
 |---|---|---|
-| **Dom** | Barra A — Agacho pesado | Agacho 4x4 @8 (rampa) · Supino 4x6 @7 · Remada curvada 4x8 · Stiff 3x10 · Dead bug 3x10/lado |
-| **Seg** | Aeróbico | Natação ou corrida, leve/moderado (distância + tempo) |
-| **Ter** | Barra B — Terra pesado | Terra 4x3 @8 (rampa) · Supino fechado 3x8 leve · Puxada 4x10 · Pallof press 3x10/lado |
-| **Qua** | Aeróbico | Natação ou corrida, leve/moderado |
-| **Qui** | Barra C — Supino pesado | Supino 5x3 @8 (rampa) · Agacho 4x6 @7 volume · Terra 2x3 @6 técnico (~70% da terça) · Remada unilateral 3x10 |
-| **Sex** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 30° 4x8 · Búlgaro 3x10/perna · Desenvolvimento halteres sentado 3x8 · Tríceps overhead/Rosca inclinada/Mesa flexora 3x12 |
+| **Dom** | Barra A — Agacho pesado | Agacho 4x4 @8 (rampa) · Supino 4x6 @7 · Remada unilateral 3x10 · Stiff 3x10 |
+| **Seg** | Barra D — Leve/acessórios (sem PR) | Supino inclinado 30° 4x8 · Búlgaro 3x10/perna · Desenvolvimento halteres sentado 3x8 · Tríceps overhead/Rosca inclinada/Mesa flexora 3x12 · Dead bug 3x10/lado |
+| **Ter** | Aeróbico | Natação ou corrida, leve/moderado (distância + tempo) |
+| **Qua** | Barra B — Terra pesado | Terra 4x3 @8 (rampa) · Supino fechado 3x8 leve · Puxada 4x10 · Pallof press 3x10/lado |
+| **Qui** | Aeróbico | Natação ou corrida, leve/moderado |
+| **Sex** | Barra C — Supino pesado | Supino 5x3 @8 (rampa) · Agacho 4x6 @7 volume · Terra 3x4 @6 técnico (~70% da quarta) · Remada curvada 4x8 |
 | **Sáb** | Off | Descanso |
 
 Aquecimento (estrutura RAMP, ~5min + rampa nos dias pesados): band pull-apart
-2x15 todo dia de barra + mobilidade enxuta e específica do dia — **Dom**:
-agacho profundo c/ peso corporal 30-45s + tornozelo · **Ter**: dobradiça sem
-carga + cat-camel · **Qui**: rotação externa de ombro · **Sex**: só o band
-pull-apart. Nada de estático longo antes do treino.
+2x15 todo dia de barra + mobilidade enxuta e específica do dia — **Dom (A)**:
+agacho profundo c/ peso corporal 30-45s + tornozelo · **Qua (B)**: dobradiça
+sem carga + cat-camel · **Sex (C)**: rotação externa de ombro · **Seg (D)**:
+só o band pull-apart. Nada de estático longo antes do treino.
 
 A rampa dos dias pesados é calculada pelo app (card próprio na tela do
 treino): **vazia×10 · 50%×5 · 70%×3 · 85%×2 · 93%×1** da carga de trabalho —
@@ -100,7 +100,7 @@ RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
 - **Vídeos**: exercícios e itens de mobilidade têm um `query` que vira link de
   busca no YouTube (o ▶ nas telas). Para fixar um vídeo favorito, adicione
   `url: 'https://youtu.be/…'` ao item — o link direto sempre ganha da busca.
-- **Aeróbico**: segunda e quarta apontam para o dia `aerobico` — registro de
+- **Aeróbico**: terça e quinta apontam para o dia `aerobico` — registro de
   distância + tempo com pace automático. As modalidades ficam em
   `CARDIO_MODALITIES` (natação em m·min/100m, corrida em km·min/km); modalidade
   nova é uma linha, e a chave nunca deve ser renomeada (o registro é por chave).

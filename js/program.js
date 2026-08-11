@@ -13,7 +13,7 @@
  *  - quality:   progride em reps/qualidade, não em carga (core, ombro)
  *
  * Um slot pode ter `query`/`url` próprios: o ▶ do card usa o do slot antes
- * do exercício (ex.: core é dead bug no domingo e Pallof na terça).
+ * do exercício (ex.: core é Pallof na Barra B e dead bug na Barra D).
  *
  * Alternativas (aparelho ocupado/inexistente): slots de acessório podem ter
  * `alternatives: [id1, id2]` — fallbacks em ordem de preferência, mostrados
@@ -52,8 +52,8 @@ export const EXERCISES = {
   'remada-unilateral': { name: 'Remada unilateral', type: 'accessory', repRange: [10, 12], query: 'remada unilateral serrote técnica' },
   /*
    * Supino inclinado: banco a ~30° — pico de EMG da porção clavicular
-   * (Rodríguez-Ridao 2020); 45°+ vira deltoide anterior, que a sexta já
-   * cobre no desenvolvimento. Halteres = equivalente se a barra estiver
+   * (Rodríguez-Ridao 2020); 45°+ vira deltoide anterior, que a própria
+   * Barra D já cobre no desenvolvimento. Halteres = equivalente se a barra estiver
    * ocupada (progressão só salta mais: 2kg por mão).
    */
   'supino-inclinado':  { name: 'Supino inclinado',  type: 'accessory', repRange: [8, 12],  query: 'supino inclinado 30 graus técnica' },
@@ -149,7 +149,7 @@ export const DAYS = {
     slots: [
       { exerciseId: 'supino', sets: 5, reps: 3, rpe: 8, rest: '3-4min', ramp: true },
       { exerciseId: 'agacho', sets: 4, reps: 6, rpe: 7, rest: '2-3min', note: 'volume' },
-      { exerciseId: 'terra', sets: 3, reps: 4, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da terça' },
+      { exerciseId: 'terra', sets: 3, reps: 4, rpe: 6, rest: '2-3min', note: 'técnico, ~70% da Barra B' },
       { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min', alternatives: ['remada-cabo', 'remada-maquina'] },
     ],
   },

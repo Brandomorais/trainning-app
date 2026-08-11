@@ -335,9 +335,14 @@ ocupa mais UI; a rampa e a mobilidade fazem a preparação que importa.
    6ª). O experimento de reativo puro fica dispensado; reavaliar o híbrido
    com 2-3 ciclos de dados (~out/2026).
 7. **Corrida sempre leve** (se usada no lugar da natação), com cuidado na
-   segunda, véspera do terra.
-8. **Se estagnar, cortar volume da sexta primeiro** — é o dia mais volumoso em
-   séries e o acessório é o primeiro volume a sair; Barras A-C não se tocam.
+   **terça**, véspera do terra (Barra B, quarta).
+8. **Se estagnar, cortar volume da Barra D primeiro** (segunda) — é o dia mais
+   volumoso em séries e o acessório é o primeiro volume a sair; Barras A-C não
+   se tocam.
+
+   *Escrito como "sexta" em 15/07, quando a Barra D caía lá; desde `4711ce7`
+   (natação fixa em terça e quinta) sexta é a **Barra C — supino pesado**.
+   Nomeie sempre a barra, não o dia: o calendário se mexe.*
 
 ## O que **não** mudar
 
