@@ -246,7 +246,7 @@ mudança recomendada até que haja um gargalo concreto:
   alta e baixa somem com carga igualada e as diferenças grandes na literatura
   são entre experientes e recreativos, alternar posição de barra sem critério
   é a pior opção — perde-se familiaridade sem ganhar ênfase.
-- **A pausa é candidata natural ao agacho volume da quinta** (4x6 @7, Barra C),
+- **A pausa é candidata natural ao agacho volume da sexta** (4x6 @7, Barra C),
   onde o objetivo já não é carga máxima. Custaria ~10-14% da carga e daria uma
   medida mais limpa de força no fundo. Não implementado — sem gatilho.
 - **Se o supino for medido em touch-and-go**, o número está inflado em ~5-10%
