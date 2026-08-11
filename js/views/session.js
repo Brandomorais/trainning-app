@@ -35,6 +35,7 @@ import {
   formatTime,
   paceFor,
   parseRestRange,
+  restCountdown,
   rampSets,
   RAMP_STEPS,
   rampFloorMin,
@@ -156,17 +157,79 @@ function rampCardsHTML(day, ctx) {
 }
 
 /*
- * "⏱ volte ~HH:MM" no card da última série registrada: hora do registro +
- * piso do descanso prescrito. Só para registro de hoje (retroativo não faz
- * sentido) e some após 1h — reabrir o app à noite não mostra hora velha.
+ * Cronômetro de descanso no card da última série registrada: conta para trás
+ * até o piso do descanso prescrito, depois marca a janela até o teto. Só para
+ * registro de hoje (retroativo não faz sentido) e some após 1h — reabrir o
+ * app à noite não mostra hora velha.
+ *
+ * Os instantes-alvo vão nos data-* e o tick (ver `render`) só lê deles: o
+ * estado vive no DOM, então cada render reemite tudo e nada precisa ser
+ * guardado em memória.
  */
 function returnLineHTML(slot, ctx) {
   if (!ctx.lastLog || ctx.lastLog.exerciseId !== slot.exerciseId) return '';
   const range = parseRestRange(slot.rest);
   if (!range || Date.now() - ctx.lastLog.createdAt > 3600e3) return '';
-  const t = new Date(ctx.lastLog.createdAt + range.min * 1000);
-  const hhmm = t.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  return `<p class="return-line">⏱ volte ~${hhmm}</p>`;
+  const minAt = ctx.lastLog.createdAt + range.min * 1000;
+  const maxAt = ctx.lastLog.createdAt + range.max * 1000;
+  const { state, text } = restCountdown(minAt, maxAt, slot.rest);
+  return `<p class="return-line ${state}" data-min-at="${minAt}" data-max-at="${maxAt}" data-hide-at="${
+    ctx.lastLog.createdAt + 3600e3
+  }" data-rest="${esc(slot.rest)}">${text}</p>`;
+}
+
+/*
+ * Tick do cronômetro de descanso. Só uma linha existe por vez (a do card da
+ * última série), então basta um interval — reiniciado a cada render.
+ *
+ * Duas armadilhas de PWA no celular, resolvidas aqui:
+ *  - o valor é SEMPRE recalculado contra Date.now(), nunca decrementado: com
+ *    a tela bloqueada o navegador estrangula o interval, e um contador
+ *    próprio atrasaria;
+ *  - o tick se mata sozinho quando a linha sai do documento — sair para outra
+ *    aba troca o innerHTML da view e nunca mais chama este render.
+ */
+let restTick = null;
+
+function startRestTick(el) {
+  clearInterval(restTick);
+  restTick = null;
+  document.onvisibilitychange = null;
+
+  const line = el.querySelector('.return-line');
+  if (!line) return;
+
+  const stop = () => {
+    clearInterval(restTick);
+    restTick = null;
+    document.onvisibilitychange = null;
+  };
+
+  const paint = () => {
+    if (!line.isConnected) return stop();
+    const now = Date.now();
+    if (now > Number(line.dataset.hideAt)) {
+      line.remove();
+      return stop();
+    }
+    const { state, text } = restCountdown(
+      Number(line.dataset.minAt),
+      Number(line.dataset.maxAt),
+      line.dataset.rest,
+      now
+    );
+    line.textContent = text;
+    line.className = `return-line ${state}`;
+  };
+
+  paint();
+  restTick = setInterval(paint, 1000);
+  // Repinta na hora ao destravar o celular, em vez de mostrar valor velho até
+  // o próximo tick. Propriedade de slot único (como el.onclick): a próxima
+  // atribuição substitui, sem acumular listener.
+  document.onvisibilitychange = () => {
+    if (!document.hidden) paint();
+  };
 }
 
 /*
@@ -471,6 +534,8 @@ export async function render(el, dayKey, logDate) {
     ${datePicker}
     ${body}
     ${incompleteBar}`;
+
+  startRestTick(el);
 
   const rerender = async () => {
     const sy = window.scrollY;

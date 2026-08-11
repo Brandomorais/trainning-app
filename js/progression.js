@@ -128,6 +128,28 @@ export function parseRestRange(str) {
   return min > 0 && max >= min ? { min, max } : null;
 }
 
+/*
+ * Estado do cronômetro de descanso, a partir dos instantes-alvo (epoch ms)
+ * derivados do registro da última série. Puro: `now` entra por parâmetro.
+ *  - waiting: ainda descansando, conta para trás até o mínimo
+ *  - ready:   dentro da janela prescrita (só existe se max > min)
+ *  - over:    passou do máximo
+ * `restLabel` é o `rest` do slot ('3-5min'); o topo sai do último trecho.
+ */
+export function restCountdown(minAt, maxAt, restLabel, now = Date.now()) {
+  const backAt = new Date(minAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  // Ceil na contagem regressiva (não mostra 0:00 enquanto ainda falta tempo)
+  // e floor no decorrido (só marca +0:01 depois de um segundo cheio).
+  if (now < minAt) {
+    return { state: 'waiting', text: `⏱ ${formatTime(Math.ceil((minAt - now) / 1000))} · volte ~${backAt}` };
+  }
+  if (now < maxAt) {
+    return { state: 'ready', text: `⏱ +${formatTime(Math.floor((now - minAt) / 1000))} · na janela` };
+  }
+  const top = String(restLabel ?? '').trim().split('-').pop();
+  return { state: 'over', text: `⏱ +${formatTime(Math.floor((now - maxAt) / 1000))} · passou de ${top}` };
+}
+
 /* ---------- Rampa de aquecimento ---------- */
 /*
  * Séries de aproximação até a carga de trabalho do dia, TUDO na unidade

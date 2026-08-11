@@ -11,6 +11,7 @@ import {
   workTopWeight,
   lastTopSummary,
   addDaysISO,
+  restCountdown,
 } from '../js/progression.js';
 
 /* ---------- Helpers de fixture ---------- */
@@ -245,4 +246,55 @@ test('lastTopSummary retorna topo de trabalho da última sessão não-deload', (
 
 test('lastTopSummary sem histórico retorna null', () => {
   assert.equal(lastTopSummary([], 'remada-cabo', 'barra-a', '2026-07-19'), null);
+});
+
+/* ---------- restCountdown ---------- */
+
+/* Alvos a partir de um registro em T0: 3-5min → mín em +180s, máx em +300s. */
+const T0 = Date.UTC(2026, 7, 10, 20, 0, 0);
+const at = (s) => T0 + s * 1000;
+
+test('restCountdown: faixa 3-5min passa por waiting → ready → over', () => {
+  const [minAt, maxAt] = [at(180), at(300)];
+
+  const a = restCountdown(minAt, maxAt, '3-5min', at(13));
+  assert.equal(a.state, 'waiting');
+  assert.match(a.text, /^⏱ 2:47 · volte ~\d{2}:\d{2}$/);
+
+  const b = restCountdown(minAt, maxAt, '3-5min', at(220));
+  assert.deepEqual(b, { state: 'ready', text: '⏱ +0:40 · na janela' });
+
+  const c = restCountdown(minAt, maxAt, '3-5min', at(435));
+  assert.deepEqual(c, { state: 'over', text: '⏱ +2:15 · passou de 5min' });
+});
+
+test('restCountdown: descanso de valor único pula ready (mín = máx)', () => {
+  const t = at(60);
+  assert.equal(restCountdown(t, t, '60s', at(22)).state, 'waiting');
+  assert.deepEqual(restCountdown(t, t, '60s', at(124)), {
+    state: 'over',
+    text: '⏱ +1:04 · passou de 60s',
+  });
+});
+
+test('restCountdown: topo do rótulo sai do último trecho da faixa', () => {
+  const over = (label, maxS, nowS) =>
+    restCountdown(at(0), at(maxS), label, at(nowS)).text;
+  assert.match(over('90s-2min', 120, 121), /passou de 2min$/);
+  assert.match(over('60-90s', 90, 91), /passou de 90s$/);
+  assert.match(over('3-4min', 240, 241), /passou de 4min$/);
+});
+
+test('restCountdown: segundos abaixo de 10 vêm com zero à esquerda', () => {
+  const t = at(60);
+  assert.match(restCountdown(t, t, '60s', at(22)).text, /^⏱ 0:38 /);
+  assert.match(restCountdown(t, t, '60s', at(68)).text, /^⏱ \+0:08 /);
+});
+
+test('restCountdown: contagem regressiva arredonda para cima (nunca 0:00 esperando)', () => {
+  const t = at(60);
+  // 200ms antes do alvo ainda é waiting, e deve mostrar 0:01, não 0:00.
+  const r = restCountdown(t, t, '60s', t - 200);
+  assert.equal(r.state, 'waiting');
+  assert.match(r.text, /^⏱ 0:01 /);
 });
