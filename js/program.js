@@ -157,6 +157,14 @@ export const DAYS = {
     name: 'Barra D — Leve/acessórios',
     kind: 'lift',
     noPR: true,
+    /*
+     * `skipOnDeload`: a Barra D sai da semana de deload. O dia existe para
+     * acumular volume de acessório — exatamente o que a semana quer reduzir.
+     * Cortar carga dele a 60% não descansa o que fatigou (o SBD pesado) e só
+     * enche a semana de sessão simbólica. Vira dia livre; o deload age onde
+     * a fadiga foi gerada.
+     */
+    skipOnDeload: true,
     /* Dia leve: só o band pull-apart fixo, sem mobilidade extra. */
     slots: [
       { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min', note: '30°', alternatives: ['inclinado-halteres', 'inclinado-maquina'] },

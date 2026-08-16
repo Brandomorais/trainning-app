@@ -38,15 +38,17 @@ function deloadBannerHTML(advice) {
     </div>`;
 }
 
-function cardHTML(key, { doneKeys, todayKey }) {
+function cardHTML(key, { doneKeys, todayKey, deload }) {
   const day = DAYS[key];
-  const meta =
-    day.kind === 'lift'
+  const skipped = deload && Boolean(day.skipOnDeload);
+  const meta = skipped
+    ? 'Fora da semana de deload'
+    : day.kind === 'lift'
       ? `${day.slots.length} exercícios`
       : day.kind === 'cardio'
         ? 'Distância + tempo · pace automático'
         : 'Descanso';
-  const done = day.kind !== 'off' && doneKeys.has(key);
+  const done = day.kind !== 'off' && !skipped && doneKeys.has(key);
   return `
     <a class="session-card${key === todayKey ? ' today' : ''}" href="#/treino/${key}" data-key="${key}">
       <div>
@@ -74,7 +76,7 @@ export async function render(el) {
   const doneKeys = new Set(logs.filter(inWeek).map((l) => l.dayKey));
   if (cardio.some(inWeek)) doneKeys.add('aerobico');
 
-  const ctx = { doneKeys, todayKey };
+  const ctx = { doneKeys, todayKey, deload: wk?.deload ?? false };
   const others = Object.keys(DAYS).filter((k) => k !== todayKey);
   const advice = cycle ? deloadAdvice(logs, cycle, date) : null;
 

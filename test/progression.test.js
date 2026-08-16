@@ -13,7 +13,10 @@ import {
   addDaysISO,
   restCountdown,
   sessionsByDay,
+  rampSets,
+  rampFloorMin,
 } from '../js/progression.js';
+import { DAYS } from '../js/program.js';
 
 /* ---------- Helpers de fixture ---------- */
 let idSeq = 0;
@@ -357,4 +360,71 @@ test('sessionsByDay: dayKey desconhecido não quebra e vai para o fim', () => {
   assert.deepEqual(g.map((x) => x.dayKey), ['barra-a', 'dia-que-nao-existe']);
   assert.equal(g[1].name, 'dia-que-nao-existe');
   assert.equal(g[1].slot, null);
+});
+
+/* ---------- Rampa de aquecimento ---------- */
+
+test('rampSets: grade grossa não gera peso quebrado', () => {
+  // A grade da rampa (5kg) é mais grossa que a da carga de trabalho (2,5kg):
+  // nenhum degrau pode cair fora do múltiplo de 5.
+  for (const alvo of [65, 72.5, 75, 80, 95, 102.5]) {
+    for (const s of rampSets(alvo)) {
+      assert.equal(s.weight % 5, 0, `degrau quebrado ${s.weight} no alvo ${alvo}`);
+    }
+  }
+});
+
+test('rampSets: agacho de 80kg sai em 4 séries, 3 trocas de anilha', () => {
+  assert.deepEqual(rampSets(80), [
+    { weight: 20, reps: 10 }, // barra vazia
+    { weight: 40, reps: 5 },
+    { weight: 55, reps: 3 },
+    { weight: 70, reps: 2 },
+  ]);
+});
+
+test('rampSets: alvo leve de deload encurta a rampa sozinho', () => {
+  // 47,5kg = 60% de 80. Não faz sentido montar a barra 5 vezes para 2x4.
+  assert.deepEqual(rampSets(47.5), [
+    { weight: 20, reps: 10 },
+    { weight: 35, reps: 3 },
+  ]);
+});
+
+test('rampSets: fromFloor não usa barra vazia e respeita o piso', () => {
+  const r = rampSets(95, { fromFloor: true });
+  assert.ok(r.every((s) => s.weight >= rampFloorMin('kg')));
+  assert.equal(r[0].weight, 50);
+  assert.ok(r[r.length - 1].weight < 95);
+});
+
+test('rampSets: alvo igual ou abaixo da barra não gera rampa', () => {
+  assert.deepEqual(rampSets(20), []);
+  assert.deepEqual(rampSets(0), []);
+  assert.deepEqual(rampSets(null), []);
+});
+
+test('rampSets: em libras a grade é de 10lb', () => {
+  const r = rampSets(185, { unit: 'lb' });
+  assert.equal(r[0].weight, 45); // barra vazia: peso do equipamento, não passa pela grade
+  for (const s of r.slice(1)) {
+    assert.equal(s.weight % 10, 0, `degrau quebrado ${s.weight}`);
+  }
+});
+
+test('rampSets: degraus sempre crescem e param antes do alvo', () => {
+  for (const alvo of [50, 65, 80, 95, 120]) {
+    const r = rampSets(alvo);
+    for (let i = 1; i < r.length; i++) {
+      assert.ok(r[i].weight > r[i - 1].weight, `degrau não cresceu no alvo ${alvo}`);
+    }
+    assert.ok(r.every((s) => s.weight < alvo), `degrau alcançou o alvo ${alvo}`);
+  }
+});
+
+test('deload: Barra D sai da semana, Barras A/B/C ficam', () => {
+  assert.equal(DAYS['barra-d'].skipOnDeload, true);
+  for (const k of ['barra-a', 'barra-b', 'barra-c']) {
+    assert.ok(!DAYS[k].skipOnDeload, `${k} não deve sair do deload`);
+  }
 });

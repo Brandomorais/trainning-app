@@ -158,6 +158,40 @@ seguidas; acessórios ganharam travas de estagnação (reps abaixo do piso 2x �
 acessório é prática comum de progressão dupla, sem RCT direto — mesma
 ressalva de honestidade do §8.1.
 
+### 5.2 Barra D fora do deload + rampa mais grossa (16/08/2026)
+
+Decidido ao entrar no primeiro deload de verdade (16-22/08, o do ciclo 1
+adiado). Duas mudanças, nenhuma delas no fator de carga:
+
+**A Barra D sai da semana de deload** (`skipOnDeload` em `program.js`). O
+formato de Bell — manter o movimento, cortar carga e volume — é sobre
+dissipar a fadiga *do trabalho pesado*. A Barra D é o dia leve, cuja função é
+acumular volume de acessório; é exatamente o que a semana quer reduzir.
+Rodá-la a 60% (inclinado a 27,5kg, búlgaro a 7,5kg) não descansa o que
+fatigou e enche a semana de sessão simbólica. Vira dia livre. As Barras A/B/C
+seguem no formato normal de deload — é lá que a fadiga foi gerada.
+
+**A rampa ganhou grade própria, mais grossa que a da carga de trabalho**
+(`rampGrid`: 5kg / 10lb, contra 2,5kg / 5lb do `roundToUnit`). Precisão de
+2,5kg num aquecimento não compra nada e só gera peso quebrado e troca de
+anilha. Efeito colateral bem-vindo: a grade alarga a folga mínima entre
+degraus, então a rampa encurta sozinha — o degrau de 93% colapsa na série de
+trabalho. Agacho de 80kg saiu de 5 séries/4 trocas (`20 · 40 · 55 · 67,5 ·
+75`) para 4 séries/3 trocas (`20 · 40 · 55 · 70`), e o agacho do deload
+(47,5kg) saiu de 5 séries/4 trocas para `20×10 → 35×3`. O gatilho foi
+concreto: a rampa estava mais longa que o treino na semana de deload.
+
+**Não mexido de propósito**: `DELOAD_LOAD_FACTOR` segue em 0,6. Está no meio
+da faixa 50-70% de Bell, e mudá-lo antes de rodar um deload uma vez sequer
+deixaria sem linha de base para comparar. Reavaliar no fim do ciclo 2 — o
+argumento a favor de 0,7 é retenção de padrão motor, e é mais forte quando a
+fadiga de entrada é leve (foi o caso: os 3 básicos `ok`, 2 PRs na semana 5).
+
+**Dívida encontrada no caminho**: `DELOAD_MAX_WEEK = 6` está declarada em
+`program.js` e não é lida em lugar nenhum. O teto funciona por via indireta
+(`deloadAdvice` retorna `null` enquanto há intervenção pendente), não pela
+constante.
+
 ## 6. Acessórios
 
 As recomendações práticas convergem

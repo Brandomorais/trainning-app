@@ -475,16 +475,28 @@ export async function render(el, dayKey, logDate) {
           .reduce((a, b) => (!a || b.createdAt > a.createdAt ? b : a), null)
       : null;
   const ctx = { logs, cardio, date, deload, dayKey, lastLog, units, noteFor };
+  // Dia que sai do calendário na semana de deload (Barra D — ver program.js).
+  const skipped = deload && Boolean(day.skipOnDeload);
 
   // Exercícios começados mas não terminados hoje — para a barra de pendências
   // e o aviso ao sair. Só "started but incomplete": não alarma o não-começado.
   const incomplete =
-    day.kind === 'lift'
+    day.kind === 'lift' && !skipped
       ? day.slots.map((s) => slotProgress(s, ctx)).filter((p) => p.logged > 0 && p.logged < p.target)
       : [];
 
   let body = '';
-  if (day.kind === 'lift') {
+  if (skipped) {
+    body = `
+      <section class="card">
+        <h2>Fora da semana de deload</h2>
+        <p class="muted">Este é o dia de acumular volume de acessório — justamente o que
+        a semana de deload existe para reduzir. Fazê-lo a 60% da carga não descansa o que
+        gerou a fadiga (o SBD pesado das Barras A, B e C), só ocupa a semana.</p>
+        <p class="muted">Descanse, ou troque por caminhada/natação leve. A Barra D volta
+        na semana 1 do próximo ciclo.</p>
+      </section>`;
+  } else if (day.kind === 'lift') {
     body = `
       ${deload ? '<div class="banner-deload">Semana de deload: ~60% da carga, metade das séries, sem RPE alto. As prescrições abaixo já estão ajustadas.</div>' : ''}
       ${day.noPR ? '<div class="banner-info">Dia leve — não buscar PR.</div>' : ''}

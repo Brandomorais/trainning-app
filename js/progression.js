@@ -170,8 +170,18 @@ export const RAMP_STEPS = [
 ];
 export const rampFloorMin = (unit = 'kg') => (unit === 'lb' ? 90 : 40);
 
+/*
+ * Grade de arredondamento da RAMPA — deliberadamente mais grossa que a da
+ * carga de trabalho (`roundToUnit`). Precisão de 2,5kg/5lb num aquecimento não
+ * compra nada e só produz peso quebrado (32,5 · 52,5 · 67,5) e uma troca de
+ * anilha a mais por degrau. A grade também alarga a folga mínima entre
+ * degraus, o que encurta a rampa sozinho: o degrau de 93% colapsa dentro da
+ * série de trabalho, e alvo leve (deload) vira rampa de 1-2 aproximações.
+ */
+export const rampGrid = (unit = 'kg') => (unit === 'lb' ? 10 : 5);
+
 export function rampSets(target, { fromFloor = false, unit = 'kg' } = {}) {
-  const grid = unit === 'lb' ? 5 : 2.5;
+  const grid = rampGrid(unit);
   const bar = unit === 'lb' ? BAR_WEIGHT_LB : BAR_WEIGHT;
   const floorMin = rampFloorMin(unit);
   const min = fromFloor ? floorMin : bar;
