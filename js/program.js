@@ -158,13 +158,15 @@ export const DAYS = {
     kind: 'lift',
     noPR: true,
     /*
-     * `skipOnDeload`: a Barra D sai da semana de deload. O dia existe para
-     * acumular volume de acessório — exatamente o que a semana quer reduzir.
-     * Cortar carga dele a 60% não descansa o que fatigou (o SBD pesado) e só
-     * enche a semana de sessão simbólica. Vira dia livre; o deload age onde
-     * a fadiga foi gerada.
+     * `deloadReplaceWith`: na semana de deload a Barra D vira natação leve.
+     * É o maior bloco de volume da semana (22 séries prescritas, ~40% acima
+     * de qualquer outro dia) e 100% acessório — exatamente o que a semana
+     * quer reduzir. Rodá-lo a 60% dá carga simbólica que não estimula nem
+     * descansa; apagá-lo perderia o hábito do dia. Trocar por recuperação
+     * ativa corta o volume e ainda trabalha a favor (§7: natação é o cenário
+     * de menor interferência com força). Só vale se for curta e leve.
      */
-    skipOnDeload: true,
+    deloadReplaceWith: 'aerobico',
     /* Dia leve: só o band pull-apart fixo, sem mobilidade extra. */
     slots: [
       { exerciseId: 'supino-inclinado', sets: 4, reps: 8, rest: '90s-2min', note: '30°', alternatives: ['inclinado-halteres', 'inclinado-maquina'] },

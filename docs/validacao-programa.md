@@ -163,13 +163,33 @@ ressalva de honestidade do §8.1.
 Decidido ao entrar no primeiro deload de verdade (16-22/08, o do ciclo 1
 adiado). Duas mudanças, nenhuma delas no fator de carga:
 
-**A Barra D sai da semana de deload** (`skipOnDeload` em `program.js`). O
-formato de Bell — manter o movimento, cortar carga e volume — é sobre
-dissipar a fadiga *do trabalho pesado*. A Barra D é o dia leve, cuja função é
-acumular volume de acessório; é exatamente o que a semana quer reduzir.
-Rodá-la a 60% (inclinado a 27,5kg, búlgaro a 7,5kg) não descansa o que
-fatigou e enche a semana de sessão simbólica. Vira dia livre. As Barras A/B/C
-seguem no formato normal de deload — é lá que a fadiga foi gerada.
+**A Barra D vira natação leve na semana de deload**
+(`deloadReplaceWith: 'aerobico'` em `program.js`). O formato de Bell — manter
+o movimento, cortar carga e volume — é sobre dissipar a fadiga *do trabalho
+pesado*. A Barra D não gera essa fadiga (é 100% acessório, zero SBD), mas é
+**o maior bloco de volume da semana**: 22 séries prescritas contra 14-16 das
+outras, média de 20,3 realmente logadas contra 12-14. Ou seja, é o dia que
+menos justifica um corte de *carga* e mais justifica um corte de *volume*.
+
+Três opções foram consideradas: rodá-la a 60% (carga simbólica — búlgaro a
+7,5kg — que não estimula nem descansa), carga normal com metade das séries
+(preserva o padrão, mas 11 séries a RPE 7-8 ainda é sessão de verdade), e
+apagar o dia (perde o hábito, e a aderência por dia da semana tinha acabado
+de estabilizar). Venceu **trocar por recuperação ativa**: corta as 22 séries
+inteiras, mantém o compromisso do dia e ainda trabalha a favor da
+recuperação. O §7 sustenta a escolha da modalidade — natação é o cenário de
+menor interferência com força (sem impacto, sem excêntrico, dia próprio).
+
+Condição para não virar troca lateral: **a natação precisa ser curta e leve**
+(~800-1.000m ou 20-25min). No volume habitual (~1.700m/45min) são 45 minutos
+de trabalho numa semana que existe para reduzir trabalho — a tela mostra esse
+aviso. Bônus: a semana vira teste natural do pace, que degradou o ciclo
+inteiro (2:19 → 2:48/100m com a distância caindo junto). Se ele voltar para
+2:20-2:30 com a barra aliviada, confirma fadiga de treino; se ficar em 2:45+,
+a causa é outra.
+
+As Barras A/B/C seguem no formato normal de deload — é lá que a fadiga foi
+gerada.
 
 **A rampa ganhou grade própria, mais grossa que a da carga de trabalho**
 (`rampGrid`: 5kg / 10lb, contra 2,5kg / 5lb do `roundToUnit`). Precisão de

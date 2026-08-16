@@ -40,15 +40,15 @@ function deloadBannerHTML(advice) {
 
 function cardHTML(key, { doneKeys, todayKey, deload }) {
   const day = DAYS[key];
-  const skipped = deload && Boolean(day.skipOnDeload);
-  const meta = skipped
-    ? 'Fora da semana de deload'
+  const swapTo = deload && day.deloadReplaceWith ? DAYS[day.deloadReplaceWith] : null;
+  const meta = swapTo
+    ? `Deload: vira ${swapTo.name.split(' — ')[0].toLowerCase()} leve`
     : day.kind === 'lift'
       ? `${day.slots.length} exercícios`
       : day.kind === 'cardio'
         ? 'Distância + tempo · pace automático'
         : 'Descanso';
-  const done = day.kind !== 'off' && !skipped && doneKeys.has(key);
+  const done = day.kind !== 'off' && !swapTo && doneKeys.has(key);
   return `
     <a class="session-card${key === todayKey ? ' today' : ''}" href="#/treino/${key}" data-key="${key}">
       <div>

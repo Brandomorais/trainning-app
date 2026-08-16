@@ -475,49 +475,50 @@ export async function render(el, dayKey, logDate) {
           .reduce((a, b) => (!a || b.createdAt > a.createdAt ? b : a), null)
       : null;
   const ctx = { logs, cardio, date, deload, dayKey, lastLog, units, noteFor };
-  // Dia que sai do calendário na semana de deload (Barra D — ver program.js).
-  const skipped = deload && Boolean(day.skipOnDeload);
+  /*
+   * Dia trocado na semana de deload (Barra D → natação leve; ver program.js).
+   * É só apresentação: cardio é indexado por data, não por dayKey, então o
+   * registro cai no lugar certo sem nada de especial no modelo de dados.
+   */
+  const effDay = (deload && DAYS[day.deloadReplaceWith]) || day;
+  const swapped = effDay !== day;
 
   // Exercícios começados mas não terminados hoje — para a barra de pendências
   // e o aviso ao sair. Só "started but incomplete": não alarma o não-começado.
   const incomplete =
-    day.kind === 'lift' && !skipped
-      ? day.slots.map((s) => slotProgress(s, ctx)).filter((p) => p.logged > 0 && p.logged < p.target)
+    effDay.kind === 'lift'
+      ? effDay.slots.map((s) => slotProgress(s, ctx)).filter((p) => p.logged > 0 && p.logged < p.target)
       : [];
 
+  const swapBanner = swapped
+    ? `<div class="banner-deload">Semana de deload: ${day.name} sai e vira recuperação ativa.
+       É o maior bloco de volume da semana e todo de acessório — o que o deload quer reduzir.
+       <b>Curta e leve</b> (~800-1.000m ou 20-25min); no ritmo de sempre não é deload.</div>`
+    : '';
+
   let body = '';
-  if (skipped) {
-    body = `
-      <section class="card">
-        <h2>Fora da semana de deload</h2>
-        <p class="muted">Este é o dia de acumular volume de acessório — justamente o que
-        a semana de deload existe para reduzir. Fazê-lo a 60% da carga não descansa o que
-        gerou a fadiga (o SBD pesado das Barras A, B e C), só ocupa a semana.</p>
-        <p class="muted">Descanse, ou troque por caminhada/natação leve. A Barra D volta
-        na semana 1 do próximo ciclo.</p>
-      </section>`;
-  } else if (day.kind === 'lift') {
+  if (effDay.kind === 'lift') {
     body = `
       ${deload ? '<div class="banner-deload">Semana de deload: ~60% da carga, metade das séries, sem RPE alto. As prescrições abaixo já estão ajustadas.</div>' : ''}
-      ${day.noPR ? '<div class="banner-info">Dia leve — não buscar PR.</div>' : ''}
-      ${warmupHTML(day)}
-      ${rampCardsHTML(day, ctx)}
+      ${effDay.noPR ? '<div class="banner-info">Dia leve — não buscar PR.</div>' : ''}
+      ${warmupHTML(effDay)}
+      ${rampCardsHTML(effDay, ctx)}
       ${rpeRefHTML()}
-      ${day.slots.map((s) => slotCard(s, ctx)).join('')}`;
-  } else if (day.kind === 'cardio') {
-    body = cardioBody(day, ctx);
+      ${effDay.slots.map((s) => slotCard(s, ctx)).join('')}`;
+  } else if (effDay.kind === 'cardio') {
+    body = swapBanner + cardioBody(effDay, ctx);
   } else {
     body = `
       <section class="card">
-        <h2>${day.name}</h2>
-        ${day.note ? `<p class="muted" style="margin-top:8px">${day.note}</p>` : ''}
-        ${day.kind === 'off' ? '<p class="muted" style="margin-top:8px">Descansa. O treino de amanhã agradece.</p>' : ''}
+        <h2>${effDay.name}</h2>
+        ${effDay.note ? `<p class="muted" style="margin-top:8px">${effDay.note}</p>` : ''}
+        ${effDay.kind === 'off' ? '<p class="muted" style="margin-top:8px">Descansa. O treino de amanhã agradece.</p>' : ''}
       </section>`;
   }
 
   const isToday = date === today;
   const datePicker =
-    day.kind !== 'lift' && day.kind !== 'cardio'
+    effDay.kind !== 'lift' && effDay.kind !== 'cardio'
       ? ''
       : `
     <label class="field log-date${isToday ? '' : ' not-today'}">
@@ -538,7 +539,7 @@ export async function render(el, dayKey, logDate) {
     <a class="back-link" href="#/treinos">‹ Treinos</a>
     <header class="page-head">
       <div>
-        <h1>${day.name}</h1>
+        <h1>${swapped ? effDay.name : day.name}</h1>
         <p class="muted small">${formatDateLong(date)}</p>
       </div>
       ${weekBadge(wk)}
@@ -586,7 +587,7 @@ export async function render(el, dayKey, logDate) {
     }
     if (e.target.classList.contains('in-ramp-target')) {
       const card = e.target.closest('.ramp-card');
-      const slot = day.slots.find((s) => s.exerciseId === card.dataset.rampEx && s.ramp);
+      const slot = (effDay.slots ?? []).find((s) => s.exerciseId === card.dataset.rampEx && s.ramp);
       const unit = units[card.dataset.rampEx] ?? 'kg';
       if (slot) card.querySelector('.ramp-line').textContent = rampCalcText(slot, parseNum(e.target.value), unit);
     }

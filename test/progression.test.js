@@ -422,9 +422,13 @@ test('rampSets: degraus sempre crescem e param antes do alvo', () => {
   }
 });
 
-test('deload: Barra D sai da semana, Barras A/B/C ficam', () => {
-  assert.equal(DAYS['barra-d'].skipOnDeload, true);
+test('deload: Barra D vira aeróbico, Barras A/B/C ficam intactas', () => {
+  // O dia de acessório (maior volume da semana) sai; o SBD pesado continua
+  // no formato normal de deload, que é onde a fadiga foi gerada.
+  assert.equal(DAYS['barra-d'].deloadReplaceWith, 'aerobico');
+  assert.ok(DAYS['aerobico'], 'o dia de destino da troca precisa existir');
+  assert.equal(DAYS[DAYS['barra-d'].deloadReplaceWith].kind, 'cardio');
   for (const k of ['barra-a', 'barra-b', 'barra-c']) {
-    assert.ok(!DAYS[k].skipOnDeload, `${k} não deve sair do deload`);
+    assert.ok(!DAYS[k].deloadReplaceWith, `${k} não deve ser trocada no deload`);
   }
 });
