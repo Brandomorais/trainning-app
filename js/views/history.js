@@ -112,13 +112,26 @@ function strengthDetail(logs, unit, exNotes) {
         if (t.insufficient) {
           return [`<div class="trend"><b>${day.name}</b> — análise de tendência a partir de 3 sessões (tem ${t.sessions}).</div>`];
         }
-        const head = { ok: '✓ Progredindo', atencao: '⚠ Atenção', estagnado: '⛔ Estagnado' }[t.status];
+        const role = slot.role ?? (slot.ramp ? 'primary' : 'volume');
+        const roleLabel = { primary: 'pesado', volume: 'volume', technique: 'técnica' }[role];
+        const prescriptionName = `${curtoDia(day.name)} · ${EXERCISES[selectedEx].name} ${roleLabel}`;
+        const head = t.status === 'ok'
+          ? '✓ Progredindo'
+          : t.status === 'atencao'
+            ? '⚠ Platô'
+            : role === 'primary' ? '⛔ Fadiga' : '⛔ Fadiga local';
         const why =
           t.status === 'ok'
             ? 'e1RM subindo na janela recente'
             : trendSignals(t, slot).join(' e ');
-        const tail = t.status === 'estagnado' ? '. Considere deload antecipado (−10%)' : '';
-        return [`<div class="trend trend-${t.status}"><b>${head}</b> — ${day.name}: ${why}${tail}.</div>`];
+        const tail = t.status === 'estagnado'
+          ? role === 'primary'
+            ? '. Reduza esta série; deload geral somente com fadiga em outro básico'
+            : '. Ajuste apenas esta prescrição; não antecipe o deload geral'
+          : t.status === 'atencao' && role !== 'primary'
+            ? '. Mantenha a carga enquanto o RPE estiver no alvo; isso não indica deload'
+            : '';
+        return [`<div class="trend trend-${t.status}"><b>${head}</b> — ${prescriptionName}: ${why}${tail}.</div>`];
       })
       .join('');
   }

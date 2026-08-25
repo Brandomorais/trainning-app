@@ -15,6 +15,7 @@ import {
   sessionsByDay,
   rampSets,
   rampFloorMin,
+  analyzeTrend,
 } from '../js/progression.js';
 import { DAYS } from '../js/program.js';
 
@@ -31,6 +32,7 @@ function sets(n, date, exerciseId, weight, reps, opts = {}) {
 }
 
 const AG = { exerciseId: 'agacho', sets: 4, reps: 4, rpe: 8, rest: '3-5min', ramp: true }; // increment 5
+const SU_VOLUME = { exerciseId: 'supino', sets: 4, reps: 6, rpe: 7, rest: '2-3min', role: 'volume' };
 const REM = { exerciseId: 'remada-curvada', sets: 4, reps: 8, rest: '90s-2min' }; // accessory repRange [8,12]
 
 /* ---------- workTopWeight ---------- */
@@ -114,6 +116,27 @@ test('RPE ≥ alvo+2 recua um degrau', () => {
   assert.equal(adv.status, 'atencao');
 });
 
+test('volume estável no RPE-alvo é platô e não sugere deload', () => {
+  const logs = ['2026-06-14', '2026-06-21', '2026-06-28', '2026-07-05']
+    .flatMap((date) => sets(4, date, 'supino', 70, 6, { rpe: 7, dayKey: 'barra-a' }));
+  const trend = analyzeTrend(SU_VOLUME, logs, 'barra-a', '2026-07-12');
+  const adv = advise(SU_VOLUME, logs, '2026-07-12', false, 'barra-a');
+  assert.equal(trend.status, 'atencao');
+  assert.equal(trend.plateauPersistent, true);
+  assert.equal(adv.weight, 70);
+  assert.match(adv.text, /Platô na série de volume/);
+  assert.match(adv.text, /não indica deload/);
+});
+
+test('fadiga em série de volume gera ajuste local, não deload geral', () => {
+  const logs = ['2026-06-21', '2026-06-28', '2026-07-05']
+    .flatMap((date) => sets(4, date, 'supino', 70, 6, { rpe: 8, dayKey: 'barra-a' }));
+  const adv = advise(SU_VOLUME, logs, '2026-07-12', false, 'barra-a');
+  assert.equal(adv.status, 'estagnado');
+  assert.match(adv.text, /Ajuste apenas esta série/);
+  assert.match(adv.text, /sem antecipar o deload geral/);
+});
+
 /* ---------- advise: acessórios ---------- */
 
 test('acessório no teto de reps sobe a carga', () => {
@@ -175,15 +198,15 @@ test('deload adiado: semana 5 vira treino marcado como adiado, deload na 6ª', (
 /* ---------- deloadAdvice ---------- */
 
 /*
- * Fixture de fadiga: agacho e terra com e1RM estancado há 4 sessões
- * (status 'estagnado' pelo stalled4) nos seus dias pesados.
+ * Fixture de fadiga: agacho e terra com e1RM estancado e RPE acima do alvo
+ * nos seus dias pesados.
  */
 function fatiguedLogs(weeks = 4) {
   const logs = [];
   for (let i = 0; i < weeks; i++) {
     const sunday = addDaysISO('2026-07-05', i * 7);
-    logs.push(...sets(4, sunday, 'agacho', 100, 4, { rpe: 8, dayKey: 'barra-a' }));
-    logs.push(...sets(4, addDaysISO(sunday, 3), 'terra', 140, 3, { rpe: 8, dayKey: 'barra-b' }));
+    logs.push(...sets(4, sunday, 'agacho', 100, 4, { rpe: 9, dayKey: 'barra-a' }));
+    logs.push(...sets(4, addDaysISO(sunday, 3), 'terra', 140, 3, { rpe: 9, dayKey: 'barra-b' }));
   }
   return logs;
 }
@@ -208,6 +231,16 @@ test('deloadAdvice: sem fadiga não antecipa', () => {
     ...sets(4, '2026-07-19', 'agacho', 110, 4, { rpe: 8, dayKey: 'barra-a' }),
     ...sets(4, '2026-07-26', 'agacho', 115, 4, { rpe: 8, dayKey: 'barra-a' }),
   ];
+  assert.equal(deloadAdvice(logs, CYCLE, '2026-07-29'), null);
+});
+
+test('deloadAdvice: platô isolado nos básicos não antecipa deload', () => {
+  const logs = [];
+  for (let i = 0; i < 4; i++) {
+    const sunday = addDaysISO('2026-07-05', i * 7);
+    logs.push(...sets(4, sunday, 'agacho', 100, 4, { rpe: 8, dayKey: 'barra-a' }));
+    logs.push(...sets(4, addDaysISO(sunday, 3), 'terra', 140, 3, { rpe: 8, dayKey: 'barra-b' }));
+  }
   assert.equal(deloadAdvice(logs, CYCLE, '2026-07-29'), null);
 });
 

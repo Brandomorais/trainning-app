@@ -104,13 +104,12 @@ RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
   distância + tempo com pace automático. As modalidades ficam em
   `CARDIO_MODALITIES` (natação em m·min/100m, corrida em km·min/km); modalidade
   nova é uma linha, e a chave nunca deve ser renomeada (o registro é por chave).
-- **Estagnação**: para os `main`, o app analisa as últimas 3 sessões da mesma
-  prescrição (agacho pesado ≠ agacho volume) e cruza dois sinais: e1RM que não
-  sobe e RPE ≥ alvo + 1. Um sinal → aviso amarelo e sugestão de segurar a
-  carga; dois sinais (ou um persistindo 4 sessões) → aviso vermelho e deload
-  antecipado de 10%. Aparece no hint do exercício e como badge no histórico.
-  Sessões de deload ficam fora da análise, e nada disso trava o formulário —
-  a carga sugerida é sempre editável.
+- **Tendência e fadiga**: para os `main`, o app analisa as últimas 3 sessões da
+  mesma prescrição (pesada ≠ volume ≠ técnica). e1RM estável com RPE no alvo é
+  apenas platô; RPE alto persistente caracteriza fadiga. Volume e técnica
+  recebem ajustes locais, nunca disparam deload geral. Antecipar o deload exige
+  sinais em pelo menos dois básicos pesados, com fadiga em pelo menos um.
+  Sessões de deload ficam fora da análise, e a sugestão permanece editável.
 
 ## Backup
 

@@ -158,6 +158,11 @@ seguidas; acessórios ganharam travas de estagnação (reps abaixo do piso 2x �
 acessório é prática comum de progressão dupla, sem RCT direto — mesma
 ressalva de honestidade do §8.1.
 
+O detector também distingue o papel da prescrição (`primary`, `volume` e
+`technique`): platô de e1RM sem RPE alto não é fadiga; volume/técnica recebem
+ajuste local e não recomendam deload geral. A antecipação continua restrita a
+sinais combinados em pelo menos dois dos três básicos pesados.
+
 ### 5.2 Barra D fora do deload + rampa mais grossa (16/08/2026)
 
 Decidido ao entrar no primeiro deload de verdade (16-22/08, o do ciclo 1

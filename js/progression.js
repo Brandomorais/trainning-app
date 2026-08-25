@@ -249,7 +249,7 @@ export function deloadAdvice(logs, cycle, dateISO = toISODate()) {
   const trends = [];
   for (const [dayKey, day] of Object.entries(DAYS)) {
     for (const slot of day.slots ?? []) {
-      if (!slot.ramp) continue; // os 3 básicos pesados (agacho A, terra B, supino C)
+      if ((slot.role ?? (slot.ramp ? 'primary' : null)) !== 'primary') continue;
       const trend = analyzeTrend(slot, logs, dayKey, dateISO);
       trends.push({ name: EXERCISES[slot.exerciseId].name, trend });
     }
@@ -433,8 +433,9 @@ export function weeklyLiftCounts(logs, weeks = 12, todayISO = toISODate()) {
  *  - e1rmStalled: melhor e1RM da sessão não superou o de 3 sessões atrás
  *  - rpeHigh: RPE médio nas séries da carga máxima ≥ alvo + 1 nas 2 últimas
  *
- * Status: 1 sinal → 'atencao'; 2 sinais, ou 1 sinal persistindo por
- * 4 sessões → 'estagnado'. Menos de 3 sessões → 'ok' (sem alarme falso).
+ * Platô de e1RM sozinho → 'atencao'. Só há 'estagnado' quando existe sinal
+ * de fadiga (RPE alto persistente), evitando transformar volume estável em
+ * recomendação de deload. Menos de 3 sessões → 'ok' (sem alarme falso).
  */
 export function analyzeTrend(slot, logs, dayKey, dateISO = null) {
   const sessions = sessionsFor(logs, slot.exerciseId)
@@ -461,9 +462,9 @@ export function analyzeTrend(slot, logs, dayKey, dateISO = null) {
 
   let status = 'ok';
   if (stalled3 || rpeHigh2) status = 'atencao';
-  if ((stalled3 && rpeHigh2) || stalled4 || rpeHigh3) status = 'estagnado';
+  if ((stalled3 && rpeHigh2) || rpeHigh3) status = 'estagnado';
 
-  return { status, sessions: n, e1rmStalled: stalled3, rpeHigh: rpeHigh2, insufficient: false };
+  return { status, sessions: n, e1rmStalled: stalled3, plateauPersistent: stalled4, rpeHigh: rpeHigh2, insufficient: false };
 }
 
 /** Descrição humana dos sinais de um trend (para hint e histórico). */
@@ -484,6 +485,7 @@ export function trendSignals(trend, slot) {
  */
 export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') {
   const ex = EXERCISES[slot.exerciseId];
+  const role = slot.role ?? (slot.ramp ? 'primary' : ex.type === 'main' ? 'volume' : null);
   // Sessões de deload ficam FORA do histórico: a 1ª sessão pós-deload deve
   // partir do topo de trabalho real, não dos 60% da semana leve.
   const past = sessionsFor(logs, slot.exerciseId)
@@ -526,7 +528,9 @@ export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') 
     if (failedTwice) {
       const w = roundToUnit(lastTop * FAIL_DELOAD_FACTOR, unit);
       return {
-        text: `Falhou 2 semanas seguidas → deload 10%: volte para ~${fmtWeight(w, unit)} e reconstrua.`,
+        text: role === 'primary'
+          ? `Falhou 2 semanas seguidas → reduza 10%: volte para ~${fmtWeight(w, unit)} e reconstrua.`
+          : `Falhou 2 semanas seguidas nesta prescrição → ajuste local: volte para ~${fmtWeight(w, unit)} (−10%) sem antecipar o deload geral.`,
         weight: w,
         status: 'estagnado',
       };
@@ -536,7 +540,9 @@ export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') 
     if (trend.status === 'estagnado') {
       const w = roundToUnit(lastTop * FAIL_DELOAD_FACTOR, unit);
       return {
-        text: `Estagnação: ${trendSignals(trend, slot).join(' e ')}. Deload antecipado: volte para ~${fmtWeight(w, unit)} (−10%) e reconstrua.`,
+        text: role === 'primary'
+          ? `Fadiga na série principal: ${trendSignals(trend, slot).join(' e ')}. Reduza para ~${fmtWeight(w, unit)} (−10%) e reconstrua; o deload geral depende dos outros básicos.`
+          : `Fadiga nesta prescrição de ${role === 'technique' ? 'técnica' : 'volume'}: ${trendSignals(trend, slot).join(' e ')}. Ajuste apenas esta série para ~${fmtWeight(w, unit)} (−10%), sem antecipar o deload geral.`,
         weight: w,
         status: 'estagnado',
       };
@@ -544,7 +550,9 @@ export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') 
     if (trend.status === 'atencao') {
       const [signal] = trendSignals(trend, slot);
       return {
-        text: `${signal} — segure ${fmtWeight(lastTop, unit)} e busque um RPE mais limpo antes de subir.`,
+        text: role === 'primary'
+          ? `${signal} — segure ${fmtWeight(lastTop, unit)} e busque um RPE mais limpo antes de subir.`
+          : `Platô na série de ${role === 'technique' ? 'técnica' : 'volume'}: ${signal}. Mantenha ${fmtWeight(lastTop, unit)} enquanto o RPE estiver no alvo; isso não indica deload.`,
         weight: lastTop,
         status: 'atencao',
       };
