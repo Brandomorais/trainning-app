@@ -144,7 +144,11 @@ export async function handleRequest(request, config, fetcher = fetch) {
     return json(result);
   } catch (error) {
     if (activeJob) await rpc('finish_job', { p_user: userId, p_id: activeJob, p_result: { error: 'Falha recuperável.' }, p_failed: true }).catch(() => {});
-    return json({ error: error instanceof Error ? error.message : 'Não foi possível concluir. Tente novamente.' }, 400);
+    let message = error instanceof Error ? error.message : 'Não foi possível concluir. Tente novamente.';
+    for (const secret of [config.serviceKey, config.openaiKey, config.cronSecret, request.headers.get('authorization')?.replace(/^Bearer /, '')]) {
+      if (secret) message = message.split(secret).join('[credencial omitida]');
+    }
+    return json({ error: message }, 400);
   }
 }
 
