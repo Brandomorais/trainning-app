@@ -239,7 +239,7 @@ export function cycleWeek(cycle, dateISO = toISODate()) {
  * Retorna { type, week, signals, deloadStart } (deloadStart = data a gravar
  * via setCycle se o usuário aceitar) ou null.
  */
-export function deloadAdvice(logs, cycle, dateISO = toISODate()) {
+export function deloadAdvice(logs, cycle, dateISO = toISODate(), days = DAYS) {
   const wk = cycleWeek(cycle, dateISO);
   if (!wk) return null;
   // Intervenção pendente (deload antecipado em curso ou adiado à espera):
@@ -247,7 +247,7 @@ export function deloadAdvice(logs, cycle, dateISO = toISODate()) {
   if (cycle.deloadStart && dayDiff(dateISO, addDaysISO(cycle.deloadStart, 7)) < 0) return null;
 
   const trends = [];
-  for (const [dayKey, day] of Object.entries(DAYS)) {
+  for (const [dayKey, day] of Object.entries(days)) {
     for (const slot of day.slots ?? []) {
       if ((slot.role ?? (slot.ramp ? 'primary' : null)) !== 'primary') continue;
       const trend = analyzeTrend(slot, logs, dayKey, dateISO);
@@ -311,8 +311,8 @@ export function sessionsFor(logs, exerciseId) {
  * de quantidade de dados. `dayKey` sem slot correspondente (registro avulso, ou
  * dia que saiu do programa) vira grupo próprio em vez de sujar outra linha.
  */
-export function sessionsByDay(logs, exerciseId) {
-  const order = Object.keys(DAYS);
+export function sessionsByDay(logs, exerciseId, days = DAYS) {
+  const order = Object.keys(days);
   const seen = [...new Set(logs.filter((l) => l.exerciseId === exerciseId).map((l) => l.dayKey))];
   seen.sort((a, b) => {
     const [ia, ib] = [order.indexOf(a), order.indexOf(b)];
@@ -321,8 +321,8 @@ export function sessionsByDay(logs, exerciseId) {
   });
   return seen.map((dayKey) => ({
     dayKey,
-    name: DAYS[dayKey]?.name ?? dayKey,
-    slot: (DAYS[dayKey]?.slots ?? []).find((s) => s.exerciseId === exerciseId) ?? null,
+    name: days[dayKey]?.name ?? dayKey,
+    slot: logs.filter((l) => l.dayKey === dayKey && l.exerciseId === exerciseId && l.prescription).sort((a, b) => b.date.localeCompare(a.date))[0]?.prescription ?? (days[dayKey]?.slots ?? []).find((s) => s.exerciseId === exerciseId) ?? null,
     sessions: sessionsFor(
       logs.filter((l) => l.dayKey === dayKey),
       exerciseId
@@ -354,7 +354,7 @@ export function workTopWeight(sets) {
 /** RPE médio nas séries da carga de trabalho da sessão (null se nada marcado). */
 function workTopRpe(session) {
   const w = workTopWeight(session.sets);
-  const rpes = session.sets.filter((x) => x.weight === w && x.rpe != null).map((x) => x.rpe);
+  const rpes = session.sets.filter((x) => x.weight === w && x.rpe != null && x.rpeSource !== 'legacy-unknown').map((x) => x.rpe);
   return rpes.length ? rpes.reduce((a, b) => a + b, 0) / rpes.length : null;
 }
 
@@ -362,8 +362,7 @@ function workTopRpe(session) {
 function sessionFailed(session, prescribedReps) {
   if (!prescribedReps) return false;
   const w = workTopWeight(session.sets);
-  const repsAtTop = Math.max(0, ...session.sets.filter((s) => s.weight === w).map((s) => s.reps));
-  return repsAtTop < prescribedReps;
+  return session.sets.filter((s) => s.weight === w).every((s) => s.reps < (s.prescription?.reps ?? prescribedReps));
 }
 
 /* ---------- Resumo: PRs e frequência semanal ---------- */
@@ -453,9 +452,10 @@ export function analyzeTrend(slot, logs, dayKey, dateISO = null) {
   const stalled4 = n >= 4 && e1rms[n - 1] <= e1rms[n - 4];
 
   const overTarget = (s) => {
-    if (!slot.rpe) return false;
-    const rpe = workTopRpe(s); // carga de trabalho: feeler/PR single não conta
-    return rpe != null && rpe >= slot.rpe + 1;
+    const target = s.sets.find((x) => x.prescription?.rpe)?.prescription.rpe ?? slot.rpe;
+    if (!target) return false;
+    const rpe = workTopRpe({ ...s, sets: s.sets.filter((x) => x.rpeSource !== 'legacy-unknown') });
+    return rpe != null && rpe >= target + 1;
   };
   const rpeHigh2 = overTarget(sessions[n - 1]) && overTarget(sessions[n - 2]);
   const rpeHigh3 = rpeHigh2 && overTarget(sessions[n - 3]);
@@ -484,6 +484,14 @@ export function trendSignals(trend, slot) {
  * `unit` só muda textos e a grade de arredondamento — a conta é sempre em kg.
  */
 export function advise(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') {
+  const result = adviseBase(slot, logs, dateISO, deload, dayKey, unit);
+  const alreadyUsed = logs.some((l) => l.dayKey === dayKey && l.exerciseId === slot.exerciseId && l.date >= slot.loadFrom && l.date < dateISO);
+  if (!deload && slot.loadFactor < 1 && dateISO >= slot.loadFrom && dateISO <= slot.loadUntil && !alreadyUsed && result.weight != null) {
+    return { ...result, weight: roundToUnit(result.weight * slot.loadFactor, unit), text: result.text + ' Ajuste aprovado nesta semana: ' + Math.round((1 - slot.loadFactor) * 100) + '% a menos na sugestão.' };
+  }
+  return result;
+}
+function adviseBase(slot, logs, dateISO, deload, dayKey = null, unit = 'kg') {
   const ex = EXERCISES[slot.exerciseId];
   const role = slot.role ?? (slot.ramp ? 'primary' : ex.type === 'main' ? 'volume' : null);
   // Sessões de deload ficam FORA do histórico: a 1ª sessão pós-deload deve

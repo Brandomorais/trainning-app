@@ -1,9 +1,13 @@
 # Treino Powerlifting — PWA
 
-App pessoal de controle de treino de powerlifting. **100% offline** depois do
-primeiro carregamento, **dados só no aparelho** (IndexedDB) — sem backend, sem
-login, sem nuvem. Feito em vanilla JS + HTML, sem build step e sem dependências
-de runtime.
+App pessoal de controle de treino de powerlifting. **Treino offline** depois do
+primeiro carregamento, com dados no IndexedDB e **agente remoto opcional**.
+A v2 inclui conversa, feedback, planos semanais versionados e sincronização com
+Supabase. A interface continua em vanilla JS + HTML, sem etapa de build.
+
+O agente online depende de um projeto Supabase e da API OpenAI configurados.
+Sem essa configuração, treinos e feedback continuam salvos no aparelho.
+**Ativação, testes e limites:** [guia do agente remoto](docs/agente-remoto.md).
 
 ## Rodar local (desenvolvimento)
 
@@ -12,8 +16,8 @@ npm run dev
 # abre http://localhost:5173
 ```
 
-(Usa `npx serve` — qualquer servidor estático funciona. Em `localhost` o
-service worker registra normalmente.)
+(Usa o servidor Node em `scripts/dev-server.js`, que serve apenas os arquivos
+públicos do app. Em `localhost` o service worker registra normalmente.)
 
 ## Instalar no iPhone
 
@@ -32,15 +36,16 @@ O caminho recomendado é o GitHub Pages:
 4. **Compartilhar → Adicionar à Tela de Início.** Pronto: abre em tela cheia,
    funciona sem sinal na academia.
 
-> O repositório público expõe apenas o **código**. Seus treinos ficam no
-> IndexedDB do iPhone e nunca saem do aparelho.
+> O repositório público contém o **código**. Seus treinos ficam no IndexedDB.
+> Quando você conecta sua conta, os dados são sincronizados em um banco privado,
+> e o agente envia o contexto relevante à OpenAI. Nenhuma chave secreta entra no app.
 
 ### Atualizações
 
-Editou algo → `git push`. Na próxima vez que abrir o app **com internet**, o
-service worker baixa a versão nova em segundo plano e ela vale a partir da
-abertura seguinte. Só é preciso mexer em `CACHE_VERSION` (no `sw.js`) se você
-renomear/remover arquivos.
+Editou arquivos do app → incremente `CACHE_VERSION` no `sw.js` e publique.
+Na próxima abertura com internet, o service worker baixa o conjunto completo da
+nova versão. Feche todas as abas do app e reabra para ativá-la. Os módulos de
+uma versão ficam juntos no cache para evitar atualizações parciais.
 
 ## Programa da semana (atual)
 
@@ -89,8 +94,11 @@ de 5lb, terra mín. 90lb).
 
 ## Editar o programa de treino
 
-Tudo em **`js/program.js`**: exercícios, dias, prescrições (séries × reps ×
-RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
+O **programa inicial** e o catálogo ficam em `js/program.js`: exercícios, dias,
+prescrições, mobilidade e calendário. A prescrição vigente passa por `js/plans.js`
+e pelos planos aprovados no banco. Editar o programa inicial não sobrescreve um
+plano semanal já aplicado. Cada sessão guarda sua prescrição ao registrar a
+primeira série.
 
 - Regra única: **não renomeie o id (a chave) de um exercício existente** — o
   histórico é gravado por id. Mudar o `name` exibido pode.
@@ -113,10 +121,11 @@ RPE × descanso), mobilidade e o mapeamento dia-da-semana → sessão.
 
 ## Backup
 
-Os dados são locais — **exporte de tempos em tempos** em
+**Exporte de tempos em tempos** em
 *Config → Exportar dados (JSON)* (no iPhone abre o share sheet: salve em
 Arquivos/iCloud ou mande por AirDrop). *Importar dados* restaura um backup
-(substitui os dados atuais).
+(substitui os dados locais em aparelho sem conta vinculada). O schema 5 inclui
+planos, conversas, memórias e feedback; credenciais ficam fora do backup.
 
 ## Estrutura
 
@@ -170,10 +179,15 @@ telas convertem para km e mm:ss):
 }
 ```
 
-Ciclo: `{ "startDate": "2026-07-12" }` — semanas 1-4 + deload na 5, calculado
-pela data. O export JSON embala
-`{ app, schemaVersion: 2, exportedAt, cycle, logs, cardio }` — backups antigos
-(schema 1, sem `cardio`) continuam importáveis.
+Ciclo: `{ "startDate": "2026-07-12", "deloadStart": null }` — semanas 1-4 +
+deload na 5 por padrão, com antecipação/adiamento conforme as regras do app.
+O export usa `schemaVersion: 5` e inclui `cycle`, `logs`, `cardio`, `settings`,
+`exerciseNotes`, `sessions`, `feedback`, `memories`, `conversations`, `messages`,
+`profile`, `plans` e `reviews`. Backups v1–v4 continuam importáveis.
+
+Séries novas incluem `sessionId`, `slotId`, `planId`, `prescription` e
+`rpeSource`. RPE antigo é marcado `legacy-unknown`; prescrição antiga ausente
+não é reconstruída como se tivesse sido registrada.
 
 O Histórico abre com um **Resumo**: PRs de e1RM dos três básicos (🏆 quando o
 recorde saiu na semana), o total de powerlifting e os treinos de barra por

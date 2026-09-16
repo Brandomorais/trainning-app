@@ -1,0 +1,5 @@
+project_id = "treino-powerlifting"
+
+[functions.coach]
+# O handler verifica todas as sessões com /auth/v1/user. Cron usa segredo próprio.
+verify_jwt = false

@@ -6,6 +6,9 @@ import * as sessions from './views/sessions.js';
 import * as session from './views/session.js';
 import * as historyView from './views/history.js';
 import * as settings from './views/settings.js';
+import * as agent from './views/agent.js';
+import { ready } from './db.js';
+import { startSync } from './sync.js';
 import { DAYS } from './program.js';
 import { getSelectedSession } from './db.js';
 import { toISODate } from './progression.js';
@@ -21,6 +24,7 @@ function resolve(hash) {
     '#/treinos': sessions.render,
     '#/historico': historyView.render,
     '#/config': settings.render,
+    '#/agente': agent.render,
   };
   if (table[hash]) return { render: table[hash], tab: hash };
   return { render: sessions.render, tab: '#/treinos' };
@@ -39,6 +43,8 @@ async function navigate() {
 }
 
 async function start() {
+  await ready();
+  startSync();
   // Escolha manual do dia vale até a data virar; PWA abre sempre sem hash.
   if (!location.hash || location.hash === '#/hoje') {
     try {
@@ -54,7 +60,10 @@ async function start() {
   await navigate();
 }
 
-start();
+start().catch((error) => {
+  view.textContent = 'Não foi possível abrir os dados: ' + error.message + '. Feche outras abas do app e tente novamente.';
+});
+window.addEventListener('storage-blocked', () => { alert('Feche as outras abas do Treino para concluir a atualização dos dados.'); });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

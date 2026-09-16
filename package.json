@@ -1,11 +1,19 @@
 {
   "name": "treino-powerlifting",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "PWA offline de controle de treino de powerlifting — dados 100% locais no aparelho.",
+  "description": "PWA de powerlifting com treino offline, planos versionados e agente remoto opcional.",
   "scripts": {
-    "dev": "npx -y serve -l 5173 .",
-    "test": "node --test"
+    "dev": "node scripts/dev-server.js",
+    "test": "node --test test/*.test.js",
+    "test:e2e": "playwright test",
+    "check": "node scripts/check.js"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.5"
   }
 }

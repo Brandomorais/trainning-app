@@ -12,6 +12,7 @@ import {
   SCHEMA_VERSION,
 } from '../db.js';
 import { toISODate, lastSundayISO, cycleWeek, addDaysISO, formatDateShort } from '../progression.js';
+import { connectionHTML, handleConnectionClick } from './connection.js';
 
 export async function render(el) {
   const [cycle, logs] = await Promise.all([getCycle(), getLogs()]);
@@ -27,6 +28,7 @@ export async function render(el) {
 
   el.innerHTML = `
     <header class="page-head"><h1>Configurações</h1></header>
+    ${await connectionHTML()}
 
     <section class="card">
       <h2>Ciclo de treino</h2>
@@ -43,7 +45,7 @@ export async function render(el) {
       <h2>Backup</h2>
       <p class="muted small" style="margin:6px 0 12px">
         ${logs.length} série${logs.length === 1 ? '' : 's'} registrada${logs.length === 1 ? '' : 's'}.
-        Os dados vivem só neste aparelho — exporte de tempos em tempos.
+        Exporte uma cópia dos treinos, planos e conversas para guardar um backup.
       </p>
       <button class="btn btn-primary" id="export-btn">Exportar dados (JSON)</button>
       <label class="btn" style="display:flex;align-items:center;justify-content:center">
@@ -55,11 +57,11 @@ export async function render(el) {
 
     <section class="card">
       <h2>Zona de perigo</h2>
-      <button class="btn btn-danger" id="wipe-btn" style="margin-top:12px">Apagar todos os dados</button>
+      <button class="btn btn-danger" id="wipe-btn" style="margin-top:12px">Limpar somente este aparelho</button>
     </section>
 
     <p class="muted small" style="text-align:center;margin-top:6px">
-      Treino Powerlifting v1 · schema ${SCHEMA_VERSION} · 100% offline, dados locais
+      Treino Powerlifting v2 · schema ${SCHEMA_VERSION} · treino disponível offline
     </p>`;
 
   el.onchange = async (e) => {
@@ -81,13 +83,14 @@ export async function render(el) {
         await importData(data);
         alert('Backup importado com sucesso.');
         await render(el);
-      } catch {
-        alert('Não foi possível ler o arquivo — não é um JSON válido.');
+      } catch (error) {
+        alert(error.message || 'Não foi possível ler o arquivo.');
       }
     }
   };
 
   el.onclick = async (e) => {
+    if (await handleConnectionClick(e, el, () => render(el))) return;
     if (e.target.id === 'cycle-restart') {
       await setCycle({ startDate: lastSundayISO() });
       await render(el);
@@ -126,7 +129,7 @@ export async function render(el) {
     }
 
     if (e.target.id === 'wipe-btn') {
-      if (!confirm('Apagar TODOS os dados deste aparelho?')) return;
+      if (!confirm('Limpar os dados somente deste aparelho? Alterações ainda não sincronizadas serão perdidas.')) return;
       if (!confirm('Tem certeza? Sem um backup exportado, não há como recuperar.')) return;
       await wipeAll();
       alert('Dados apagados.');

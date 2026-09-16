@@ -1,7 +1,7 @@
 {
   "name": "Treino Powerlifting",
   "short_name": "Treino",
-  "description": "Controle de treino de powerlifting — offline, dados locais.",
+  "description": "Treino de powerlifting offline, com acompanhamento e revisão semanal.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

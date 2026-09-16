@@ -23,6 +23,10 @@ import {
   setSettings,
   getExerciseNotes,
   setExerciseNote,
+  getPlan,
+  getSession,
+  completeSession,
+  putRecord,
 } from '../db.js';
 import {
   toISODate,
@@ -45,6 +49,7 @@ import {
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+import { safeDay } from '../records.js';
 
 const parseNum = (v) => {
   const n = parseFloat(String(v).trim().replace(',', '.'));
@@ -325,7 +330,7 @@ function slotCard(slot, ctx) {
   const recommendedRpe = isHardTarget ? slot.rpe : isSoftSuggestion ? 6 : null;
   const rpeButtons = [6, 7, 8, 9, 10]
     .map((v) => {
-      const cls = v === recommendedRpe ? ' target selected default' : '';
+      const cls = v === recommendedRpe ? ' target' : '';
       return `<button class="rpe-btn${cls}" data-rpe="${v}">${v}</button>`;
     })
     .join('');
@@ -368,7 +373,7 @@ function slotCard(slot, ctx) {
       <label class="field-label">RPE ${
         isHardTarget ? `(alvo ${recommendedRpe})` : recommendedRpe != null ? `(sugestão ${recommendedRpe})` : '(opcional)'
       }</label>
-      <div class="rpe-row">${rpeButtons}<button class="rpe-btn" data-rpe="">—</button></div>
+      <div class="rpe-row">${rpeButtons}<button class="rpe-btn selected" data-rpe="" aria-label="RPE não informado">—</button></div>
       <input class="notes-input ex-notes" type="text" placeholder="Notas do exercício (opcional)" maxlength="200" value="${esc(ctx.noteFor(activeId))}">
       <button class="log-btn">${done ? 'Registrar série extra' : `Registrar série ${todays.length + 1}/${effSets}`}</button>
     </section>`;
@@ -448,7 +453,7 @@ function updatePacePreview(el) {
  * através dos rerenders — navegar para fora e voltar reseta para hoje.
  */
 export async function render(el, dayKey, logDate) {
-  const day = DAYS[dayKey];
+  let day = DAYS[dayKey];
   if (!day) {
     location.hash = '#/treinos';
     return;
@@ -456,6 +461,8 @@ export async function render(el, dayKey, logDate) {
 
   const today = toISODate();
   const date = logDate && logDate <= today ? logDate : today;
+  const [plan, savedSession] = await Promise.all([getPlan(date), getSession(date, dayKey)]);
+  day = safeDay(dayKey, savedSession?.snapshot ?? plan.days[dayKey]);
   const [logs, cycle, cardio, settings, exNotes] = await Promise.all([
     getLogs(),
     getCycle(),
@@ -467,7 +474,7 @@ export async function render(el, dayKey, logDate) {
   const noteFor = (exerciseId) =>
     exNotes.find((n) => n.date === date && n.dayKey === dayKey && n.exerciseId === exerciseId)?.text ?? '';
   const wk = cycleWeek(cycle, date);
-  const deload = wk?.deload ?? false;
+  const deload = savedSession?.isDeload ?? wk?.deload ?? false;
   const lastLog =
     date === today
       ? logs
@@ -546,6 +553,13 @@ export async function render(el, dayKey, logDate) {
     </header>
     ${datePicker}
     ${body}
+    ${effDay.kind === 'lift' ? `<section class="card session-close">
+      <h2>Fechamento do treino</h2>
+      ${savedSession?.finishedAt ? `<p class="muted small">${savedSession.status === 'completed' ? 'Treino concluído' : 'Treino interrompido'} · ${esc(savedSession.reason ?? '')}</p>` : ''}
+      <label class="field"><span>Como foi? Alguma dificuldade ou mudança?</span><textarea id="session-feedback" maxlength="2000" rows="3" placeholder="Ex.: terminei antes porque faltou tempo"></textarea></label>
+      <div class="action-row"><button class="btn btn-primary" id="finish-session">Concluir treino</button><button class="btn" id="interrupt-session">Interrompi o treino</button></div>
+      <a class="back-link" href="#/agente">Conversar com o agente →</a>
+    </section>` : ''}
     ${incompleteBar}`;
 
   startRestTick(el);
@@ -594,6 +608,16 @@ export async function render(el, dayKey, logDate) {
   };
 
   el.onclick = async (e) => {
+    if (e.target.closest('#finish-session, #interrupt-session')) {
+      const reason = el.querySelector('#session-feedback').value.trim();
+      try {
+        const status = e.target.closest('#finish-session') ? 'completed' : 'interrupted';
+        await completeSession(date, dayKey, status, reason);
+        await putRecord('feedback', { id: 'feedback:' + date + ':' + dayKey, date, dayKey, scope: 'session', text: reason, status });
+        await rerender();
+      } catch (error) { alert(error.message); }
+      return;
+    }
     // Barra de pendências: pular pro card do exercício incompleto.
     const jump = e.target.closest('.ib-chip');
     if (jump) {
@@ -712,6 +736,13 @@ export async function render(el, dayKey, logDate) {
         reps: Math.round(reps),
         rpe,
         isDeload: deload,
+        planId: savedSession?.planId ?? plan.id,
+        daySnapshot: effDay,
+        slotId: effDay.slots.find((s) => s.exerciseId === exerciseId || s.alternatives?.includes(exerciseId))?.slotId,
+        prescription: (() => {
+          const slot = effDay.slots.find((s) => s.exerciseId === exerciseId || s.alternatives?.includes(exerciseId));
+          return { ...slot, exerciseId, sets: deload ? Math.max(1, Math.ceil(slot.sets / 2)) : slot.sets, rpe: deload ? null : slot.rpe ?? null };
+        })(),
       });
       await rerender();
     }

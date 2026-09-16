@@ -4,7 +4,7 @@
  * Tocar num card grava a escolha do dia e abre a sessão.
  */
 import { DAYS, WEEKDAYS } from '../program.js';
-import { getLogs, getCardio, getCycle, setCycle, setSelectedSession } from '../db.js';
+import { getLogs, getCardio, getCycle, setCycle, setSelectedSession, getPlan, list } from '../db.js';
 import {
   toISODate,
   lastSundayISO,
@@ -38,9 +38,9 @@ function deloadBannerHTML(advice) {
     </div>`;
 }
 
-function cardHTML(key, { doneKeys, todayKey, deload }) {
-  const day = DAYS[key];
-  const swapTo = deload && day.deloadReplaceWith ? DAYS[day.deloadReplaceWith] : null;
+function cardHTML(key, { doneKeys, todayKey, deload, days }) {
+  const day = days[key];
+  const swapTo = deload && day.deloadReplaceWith ? days[day.deloadReplaceWith] : null;
   const meta = swapTo
     ? `Deload: vira ${swapTo.name.split(' — ')[0].toLowerCase()} leve`
     : day.kind === 'lift'
@@ -61,9 +61,10 @@ function cardHTML(key, { doneKeys, todayKey, deload }) {
 
 export async function render(el) {
   const date = toISODate();
+  const [plan, completed, reviews] = await Promise.all([getPlan(date), list('sessions'), list('reviews')]);
   const [logs, cardio, cycle] = await Promise.all([getLogs(), getCardio(), getCycle()]);
   const wk = cycleWeek(cycle, date);
-  const todayKey = WEEKDAYS[new Date().getDay()];
+  const todayKey = plan.weekdays[new Date().getDay()];
 
   // Sessões com registro na semana atual (domingo a sábado).
   const sunday = lastSundayISO();
@@ -73,12 +74,12 @@ export async function render(el) {
     return toISODate(d);
   })();
   const inWeek = (x) => x.date >= sunday && x.date <= saturday;
-  const doneKeys = new Set(logs.filter(inWeek).map((l) => l.dayKey));
+  const doneKeys = new Set(completed.filter((s) => inWeek(s) && s.status === 'completed').map((s) => s.dayKey));
   if (cardio.some(inWeek)) doneKeys.add('aerobico');
 
-  const ctx = { doneKeys, todayKey, deload: wk?.deload ?? false };
-  const others = Object.keys(DAYS).filter((k) => k !== todayKey);
-  const advice = cycle ? deloadAdvice(logs, cycle, date) : null;
+  const ctx = { doneKeys, todayKey, deload: wk?.deload ?? false, days: plan.days };
+  const others = [...new Set(Object.values(plan.weekdays))].filter((k) => k !== todayKey);
+  const advice = cycle ? deloadAdvice(logs, cycle, date, plan.days) : null;
 
   el.innerHTML = `
     <header class="page-head">
@@ -94,6 +95,7 @@ export async function render(el) {
         <button class="btn btn-primary" id="start-cycle" style="margin-top:10px">Iniciar ciclo — semana 1 começa no último domingo</button>
       </div>`}
     ${deloadBannerHTML(advice)}
+    <a class="session-card agent-entry" href="#/agente"><div><h2>Revisão da semana</h2><p class="muted small">${reviews.some((r) => r.status === 'proposed') ? 'Você tem uma proposta para revisar' : 'Conte como foi e prepare a próxima semana'}</p></div><span aria-hidden="true">→</span></a>
     <p class="list-label">★ Hoje</p>
     ${cardHTML(todayKey, ctx)}
     <p class="list-label">Todos os treinos</p>

@@ -4,3 +4,11 @@ node_modules/
 # Dados pessoais de treino — nunca subir (repo público)
 avaliacoes/
 backups/
+.env
+.env.*
+!.env.example
+.test-output/
+playwright-report/
+supabase/.temp/
+supabase/.branches/
+dist/

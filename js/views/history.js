@@ -3,7 +3,7 @@
  * modalidade aeróbica, gráficos + lista de sessões.
  */
 import { EXERCISES, DAYS, CARDIO_MODALITIES } from '../program.js';
-import { getLogs, getCardio, getSettings, getExerciseNotes } from '../db.js';
+import { getLogs, getCardio, getSettings, getExerciseNotes, getPlan } from '../db.js';
 import {
   sessionsFor,
   sessionsByDay,
@@ -20,10 +20,12 @@ import {
   weeklyLiftCounts,
   analyzeTrend,
   trendSignals,
+  toISODate,
 } from '../progression.js';
 import { renderLineChart, renderBarChart } from '../components/chart.js';
 
 let selectedEx = null;
+let currentPlan;
 
 /* Lista de sessões paginada: a página inteira era grande demais para achar
  * qualquer coisa. Volta ao início sempre que o exercício muda. */
@@ -53,7 +55,7 @@ function resumoHTML(logs) {
     })
     .join('');
 
-  const liftDayCount = Object.values(DAYS).filter((d) => d.kind === 'lift').length;
+  const liftDayCount = Object.values(currentPlan.weekdays).filter((key) => currentPlan.days[key].kind === 'lift').length;
   const doneThisWeek = new Set(
     logs.filter((l) => l.date >= sunday).map((l) => `${l.date}|${l.dayKey}`)
   ).size;
@@ -83,7 +85,7 @@ function strengthDetail(logs, unit, exNotes) {
 
   // Uma série por prescrição: agacho pesado (Barra A) e volume (Barra C) são
   // progressões diferentes e não podem dividir a mesma linha.
-  const groups = sessionsByDay(logs, selectedEx);
+  const groups = sessionsByDay(logs, selectedEx, currentPlan.days);
   const series = groups.map((g) => ({
     // Só "Barra C", não "Barra C — Supino pesado": o nome cheio do dia cita o
     // levantamento-título dele, que num gráfico de agacho seria ruído.
@@ -103,7 +105,7 @@ function strengthDetail(logs, unit, exNotes) {
   // (Barra A) e agacho volume (Barra C) são analisados separadamente.
   let trendHTML = '';
   if (EXERCISES[selectedEx].type === 'main') {
-    trendHTML = Object.entries(DAYS)
+    trendHTML = Object.entries(currentPlan.days)
       .filter(([, day]) => day.kind === 'lift')
       .flatMap(([dayKey, day]) => {
         const slot = (day.slots ?? []).find((s) => s.exerciseId === selectedEx);
@@ -152,7 +154,7 @@ function strengthDetail(logs, unit, exNotes) {
           const label = `${x.weight === 0 ? 'PC' : fmt1(displayWeight(x.weight, unit))} × ${x.reps}${x.rpe ? ` @RPE${x.rpe}` : ''}`;
           const e = x.weight > 0 ? `<span class="e1rm">e1RM ${fmt1(displayWeight(epley(x.weight, x.reps), unit))}</span>` : '';
           const note = x.notes ? `<span class="note">${esc(x.notes)}</span>` : '';
-          return `<li><span>${label}</span>${note || e}</li>`;
+          return `<li><span>${label}${x.prescription ? `<small class="muted"> · prescrito ${esc(prescricaoCurta(x.prescription))}</small>` : '<small class="muted"> · prescrição antiga não registrada</small>'}</span>${note || e}</li>`;
         })
         .join('');
       return `
@@ -306,6 +308,7 @@ function cardioDetail(cardio, modality) {
 
 /* ---------- Tela ---------- */
 export async function render(el) {
+  currentPlan = await getPlan(toISODate());
   const [logs, cardio, settings, exNotes] = await Promise.all([
     getLogs(),
     getCardio(),

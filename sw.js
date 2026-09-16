@@ -1,13 +1,10 @@
 /*
- * Service worker: pré-cacheia o app inteiro na instalação e responde
- * stale-while-revalidate — serve do cache na hora (offline garantido)
- * e atualiza o cache em segundo plano quando há rede. Uma nova versão
- * do app é aplicada na abertura seguinte.
+ * Cache-first de um conjunto versionado e completo de arquivos estáticos.
+ * Uma nova versão aguarda as abas antigas fecharem antes de assumir.
  *
- * CACHE_VERSION só precisa mudar em alterações estruturais (arquivo
- * renomeado/removido); edições normais chegam sozinhas via revalidação.
+ * Incremente CACHE_VERSION sempre que publicar alterações no app.
  */
-const CACHE_VERSION = 'treino-v5'; // v5: barra de séries pendentes + aviso ao sair
+const CACHE_VERSION = 'treino-v6-agent';
 
 const ASSETS = [
   './',
@@ -16,6 +13,12 @@ const ASSETS = [
   './css/style.css',
   './js/app.js',
   './js/db.js',
+  './js/storage.js',
+  './js/plans.js',
+  './js/records.js',
+  './js/api.js',
+  './js/sync.js',
+  './js/coach-policy.js',
   './js/program.js',
   './js/progression.js',
   './js/components/chart.js',
@@ -23,6 +26,8 @@ const ASSETS = [
   './js/views/session.js',
   './js/views/history.js',
   './js/views/settings.js',
+  './js/views/agent.js',
+  './js/views/connection.js',
   './js/vendor/idb-keyval.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -31,9 +36,7 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then((cache) => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_VERSION).then((cache) => cache.addAll(ASSETS))
   );
 });
 
@@ -49,19 +52,14 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   if (new URL(request.url).origin !== self.location.origin) return;
+  const allowed = new Set(ASSETS.map((path) => new URL(path, self.registration.scope).pathname));
+  if (!allowed.has(new URL(request.url).pathname)) return;
 
   event.respondWith(
     caches.open(CACHE_VERSION).then(async (cache) => {
       const cached = await cache.match(request, { ignoreSearch: true });
-      const network = fetch(request)
-        .then((response) => {
-          if (response && response.ok) cache.put(request, response.clone());
-          return response;
-        })
-        .catch(() => null);
-
       if (cached) return cached;
-      const fresh = await network;
+      const fresh = await fetch(request).catch(() => null);
       if (fresh) return fresh;
       // Offline e fora do cache: rotas de navegação caem no shell.
       if (request.mode === 'navigate') {

@@ -1,6 +1,32 @@
 /* Tema escuro fixo, mobile-first, uso com uma mão. */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Acompanhamento semanal: mesmos tokens e escala do treino. */
+.action-row, .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.action-row > .field { flex: 1; min-width: 120px; }
+.action-row .btn, .quick-replies .btn { width: auto; flex: 1 1 auto; margin: 0; }
+.agent-modes .btn { font-size: .9rem; }
+.agent-thread { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.agent-bubble { border-radius: 16px; padding: 14px 16px; max-width: 94%; overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--border); }
+.agent-bubble.from-user { align-self: flex-end; background: var(--card-2); border-color: var(--accent); }
+.agent-bubble.from-agent { align-self: flex-start; }
+.bubble-author { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+.agent-bubble p, .proposal-card p, .memory-row p { white-space: pre-wrap; line-height: 1.55; }
+.agent-composer textarea, .field textarea { width: 100%; resize: vertical; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font: inherit; min-height: 72px; }
+.agent-notice { background: var(--card-2); border-left: 3px solid var(--accent); padding: 12px; margin: 12px 0; overflow-wrap: anywhere; }
+.agent-status, .sync-label { margin: 12px 0; font-size: .9rem; color: var(--muted); }
+.plan-change, .memory-row, .conflict { padding: 16px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.plan-change p { margin-top: 6px; }
+.plan-change ul { padding-left: 20px; }
+.card > summary, .plan-change summary { cursor: pointer; padding: 10px 0; min-height: 44px; font-weight: 600; }
+.card details { margin-top: 12px; }
+.card pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+.setting-check { display: flex; gap: 10px; align-items: center; min-height: 48px; margin: 10px 0; }
+.setting-check input { width: 20px; height: 20px; }
+button:disabled { opacity: .55; cursor: wait; }
+#connection-status:not(:empty) { padding: 12px 0; color: var(--accent); }
+@media (max-width: 360px) { .agent-modes { flex-direction: column; } .agent-bubble { max-width: 100%; } }
+
 :root {
   color-scheme: dark;
   --bg: #0f1115;
