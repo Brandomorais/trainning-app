@@ -4,7 +4,7 @@
  *
  * Incremente CACHE_VERSION sempre que publicar alterações no app.
  */
-const CACHE_VERSION = 'treino-v6-agent';
+const CACHE_VERSION = 'treino-v7-agent-ui';
 
 const ASSETS = [
   './',

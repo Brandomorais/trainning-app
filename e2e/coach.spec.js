@@ -20,7 +20,7 @@ test('treino, feedback e memória ficam disponíveis sem conexão', async ({ pag
   await page.locator('#agent-text').fill('Semana que vem só tenho 45 minutos.');
   await page.locator('#agent-form button[type=submit]').click();
   await expect(page.locator('.from-user')).toContainText('45 minutos');
-  await page.getByText('O que o agente sabe sobre mim', { exact:true }).click();
+  await page.getByText('Preferências e histórico', { exact:true }).click();
   await page.locator('#memory-text').fill('Prefiro treinar pela manhã.');
   await page.locator('#memory-form button').click();
   await page.reload();

@@ -19,20 +19,27 @@ export async function render(el) {
   const waiting = latest?.role === 'user';
   const pendingReviews = reviews.filter((r) => r.status === 'proposed').sort((a, b) => b.createdAt - a.createdAt);
   const date = toISODate();
+  const hasConversation = Boolean(conversation && messages.length);
   el.innerHTML = `
-    <header class="page-head"><div><h1>Agente</h1><p class="muted small">Seu treino, com contexto</p></div><a class="back-link" href="#/config">Conexão</a></header>
+    <header class="page-head agent-head"><div><h1>Agente</h1><p class="muted small">Ajuste o treino com base no que aconteceu de verdade.</p></div><a class="back-link" href="#/config">Config</a></header>
     ${!auth ? '<div class="banner-info">Você pode salvar seu feedback agora. Para receber perguntas e ajustes da IA, conecte sua conta em Configurações.</div>' : ''}
-    <div class="agent-modes action-row"><button class="btn" data-start="weekly">Revisar semana</button><button class="btn" data-start="session">Feedback do treino</button><button class="btn" data-start="free">Conversar</button></div>
-    ${conversations.length > 1 ? `<label class="field"><span>Conversas</span><select id="conversation-select">${conversations.sort((a, b) => b.createdAt - a.createdAt).map((c) => `<option value="${esc(c.id)}"${c.id === conversation?.id ? ' selected' : ''}>${esc(c.title)} · ${esc(c.date)}</option>`).join('')}</select></label>` : ''}
+    ${!hasConversation ? `<section class="card agent-start">
+      <span class="agent-kicker">PRÓXIMA SEMANA</span>
+      <h2>Como devemos ajustar seu treino?</h2>
+      <p class="muted">Responda algumas perguntas. Você confere a proposta antes de qualquer mudança.</p>
+      <button class="btn btn-primary agent-main-action" data-start="weekly">Revisar semana</button>
+      <div class="agent-secondary-actions"><button class="btn" data-start="session">Registrar feedback</button><button class="btn" data-start="free">Fazer uma pergunta</button></div>
+    </section>` : `<div class="agent-toolbar"><button class="btn" data-start="weekly">Revisar semana</button><button class="btn" data-start="session">Registrar feedback</button><button class="btn" data-start="free">Nova conversa</button></div>`}
+    ${conversations.length > 1 ? `<details class="conversation-picker"><summary>Trocar de conversa</summary><label class="field"><span>Conversa</span><select id="conversation-select">${conversations.sort((a, b) => b.createdAt - a.createdAt).map((c) => `<option value="${esc(c.id)}"${c.id === conversation?.id ? ' selected' : ''}>${esc(c.title)} · ${esc(c.date)}</option>`).join('')}</select></label></details>` : ''}
     <section class="agent-thread" aria-label="Conversa com o agente" aria-live="polite">
-      ${messages.length ? messages.map((m) => `<article class="agent-bubble ${m.role === 'user' ? 'from-user' : 'from-agent'}"><span class="bubble-author">${m.role === 'user' ? 'Você' : 'Agente'}</span><p>${esc(m.text)}</p></article>`).join('') : '<div class="card"><h2>Como foi sua semana?</h2><p class="muted">Conte o que funcionou, o que foi difícil e como será sua próxima semana.</p></div>'}
+      ${messages.map((m) => `<article class="agent-bubble ${m.role === 'user' ? 'from-user' : 'from-agent'}"><span class="bubble-author">${m.role === 'user' ? 'Você' : 'Agente'}</span><p>${esc(m.text)}</p></article>`).join('')}
       ${busy ? '<p class="agent-status" role="status">Analisando seus registros e respostas…</p>' : ''}
     </section>
     ${message ? `<p class="agent-notice" role="status">${esc(message)}</p>` : ''}
     ${!busy && latest?.role === 'assistant' && latest.options?.length ? `<div class="quick-replies">${latest.options.map((option, i) => `<button class="btn" data-answer="${i}">${esc(option)}</button>`).join('')}</div>` : ''}
-    <form id="agent-form" class="card agent-composer">
-      <label class="field" for="agent-text"><span>Sua resposta</span><textarea id="agent-text" rows="3" maxlength="4000" placeholder="Escreva do seu jeito…" ${busy ? 'disabled' : ''}>${esc(draft ?? '')}</textarea></label>
-      <button class="btn btn-primary" type="submit" ${busy ? 'disabled' : ''}>${auth && navigator.onLine ? 'Enviar' : 'Salvar resposta'}</button>
+    <form id="agent-form" class="agent-composer">
+      <label class="field" for="agent-text"><span>${hasConversation ? 'Sua resposta' : 'Quer contar mais alguma coisa?'}</span><textarea id="agent-text" rows="3" maxlength="4000" placeholder="${hasConversation ? 'Responda do seu jeito…' : 'Ex.: semana que vem só tenho 45 minutos por treino'}" ${busy ? 'disabled' : ''}>${esc(draft ?? '')}</textarea></label>
+      <button class="btn btn-primary composer-send" type="submit" ${busy ? 'disabled' : ''}>${auth && navigator.onLine ? 'Enviar' : 'Salvar no aparelho'}</button>
       ${waiting && auth ? `<button class="btn" type="button" id="retry-agent" ${busy ? 'disabled' : ''}>Receber resposta do agente</button>` : ''}
       ${latest?.role === 'assistant' && latest.kind === 'summarize' ? `<p class="muted small">Confira o resumo acima. Você pode corrigir algo na conversa antes de continuar.</p><button class="btn" type="button" id="generate-proposal" ${busy || !auth ? 'disabled' : ''}>Resumo correto — gerar proposta</button>` : ''}
     </form>
@@ -48,12 +55,13 @@ export async function render(el) {
         <div class="action-row"><button class="btn btn-primary" data-apply="${esc(review.id)}" ${busy || !auth ? 'disabled' : ''}>Aplicar próxima semana</button><button class="btn" data-adjust="${esc(review.conversationId)}">Pedir ajuste</button><button class="btn" data-reject="${esc(review.id)}" ${busy || !auth ? 'disabled' : ''}>Manter plano atual</button></div>
       </section>`;
     }).join('')}
-    <details class="card"><summary>O que o agente sabe sobre mim</summary>
+    <details class="card agent-more"><summary>Preferências e histórico</summary>
+      <h3>O que o agente sabe sobre mim</h3>
       <p class="muted small">Preferências ficam salvas até você alterar. Para viagens ou restrições temporárias, informe a validade.</p>
       ${memories.map((m) => `<div class="memory-row"><p>${esc(m.text)}</p><span class="muted small">${m.validUntil ? 'Até ' + formatDateShort(m.validUntil) + (m.validUntil < date ? ' · expirada' : '') : 'Preferência duradoura'}</span><div class="action-row"><button class="btn" data-edit-memory="${esc(m.id)}">Editar</button><button class="btn" data-delete-memory="${esc(m.id)}">Excluir</button></div></div>`).join('')}
       <form id="memory-form"><input type="hidden" id="memory-id"><label class="field"><span>Preferência ou informação</span><textarea id="memory-text" maxlength="1500" rows="2" required></textarea></label><label class="field"><span>Válida até (opcional)</span><input id="memory-until" type="date"></label><button class="btn" type="submit">Salvar informação</button></form>
-    </details>
-    <details class="card"><summary>Planos e decisões anteriores</summary>${plans.filter((p) => p.status === 'applied').sort((a, b) => b.createdAt - a.createdAt).map((p) => `<div class="memory-row"><strong>${p.createdAt ? 'Desde ' + formatDateShort(p.effectiveFrom) : 'Programa inicial'}</strong><p>${esc(p.summary)}</p>${auth ? `<button class="btn" data-restore="${esc(p.id)}" ${busy ? 'disabled' : ''}>Usar como base da próxima semana</button>` : ''}</div>`).join('')}</details>`;
+      <h3 class="agent-history-title">Planos anteriores</h3>${plans.filter((p) => p.status === 'applied').sort((a, b) => b.createdAt - a.createdAt).map((p) => `<div class="memory-row"><strong>${p.createdAt ? 'Desde ' + formatDateShort(p.effectiveFrom) : 'Programa inicial'}</strong><p>${esc(p.summary)}</p>${auth ? `<button class="btn" data-restore="${esc(p.id)}" ${busy ? 'disabled' : ''}>Usar como base da próxima semana</button>` : ''}</div>`).join('')}
+    </details>`;
 
   const redraw = () => { if (location.hash === '#/agente') return render(el); };
   const run = async (fn) => {

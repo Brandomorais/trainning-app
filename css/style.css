@@ -5,27 +5,45 @@
 .action-row, .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .action-row > .field { flex: 1; min-width: 120px; }
 .action-row .btn, .quick-replies .btn { width: auto; flex: 1 1 auto; margin: 0; }
-.agent-modes .btn { font-size: .9rem; }
-.agent-thread { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.agent-head { margin-bottom: 12px; }
+.agent-start { padding: 22px 18px 18px; border-color: #3b3325; background: linear-gradient(145deg, #1d1c1a, var(--card)); }
+.agent-kicker { display: block; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .09em; margin-bottom: 8px; }
+.agent-start h2 { font-size: 1.25rem; line-height: 1.25; margin-bottom: 8px; }
+.agent-start > p { line-height: 1.5; }
+.agent-main-action { width: 100%; margin: 18px 0 10px; min-height: 52px; font-size: 1rem; }
+.agent-secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.agent-secondary-actions .btn { width: 100%; margin: 0; min-height: 46px; }
+.agent-toolbar { display: flex; gap: 8px; overflow-x: auto; margin: 0 0 14px; padding-bottom: 2px; scrollbar-width: none; }
+.agent-toolbar::-webkit-scrollbar { display: none; }
+.agent-toolbar .btn { flex: 0 0 auto; width: auto; margin: 0; padding: 10px 13px; font-size: .84rem; }
+.conversation-picker { margin: -2px 2px 12px; color: var(--muted); }
+.conversation-picker summary { cursor: pointer; min-height: 42px; display: flex; align-items: center; font-size: .85rem; }
+.agent-thread { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
 .agent-bubble { border-radius: 16px; padding: 14px 16px; max-width: 94%; overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--border); }
 .agent-bubble.from-user { align-self: flex-end; background: var(--card-2); border-color: var(--accent); }
 .agent-bubble.from-agent { align-self: flex-start; }
 .bubble-author { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
 .agent-bubble p, .proposal-card p, .memory-row p { white-space: pre-wrap; line-height: 1.55; }
+.agent-composer { position: sticky; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 3; background: rgba(23,26,33,.96); border: 1px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 14px; box-shadow: 0 -8px 24px rgba(0,0,0,.22); backdrop-filter: blur(10px); }
 .agent-composer textarea, .field textarea { width: 100%; resize: vertical; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); font: inherit; min-height: 72px; }
+.agent-composer .field span { font-size: .82rem; color: var(--muted); }
+.composer-send { width: 100%; margin: 8px 0 0; min-height: 46px; }
 .agent-notice { background: var(--card-2); border-left: 3px solid var(--accent); padding: 12px; margin: 12px 0; overflow-wrap: anywhere; }
 .agent-status, .sync-label { margin: 12px 0; font-size: .9rem; color: var(--muted); }
 .plan-change, .memory-row, .conflict { padding: 16px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
 .plan-change p { margin-top: 6px; }
 .plan-change ul { padding-left: 20px; }
 .card > summary, .plan-change summary { cursor: pointer; padding: 10px 0; min-height: 44px; font-weight: 600; }
+.agent-more > summary { padding: 2px 0; }
+.agent-more h3 { font-size: 1rem; margin: 18px 0 6px; }
+.agent-history-title { padding-top: 8px; border-top: 1px solid var(--border); }
 .card details { margin-top: 12px; }
 .card pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
 .setting-check { display: flex; gap: 10px; align-items: center; min-height: 48px; margin: 10px 0; }
 .setting-check input { width: 20px; height: 20px; }
 button:disabled { opacity: .55; cursor: wait; }
 #connection-status:not(:empty) { padding: 12px 0; color: var(--accent); }
-@media (max-width: 360px) { .agent-modes { flex-direction: column; } .agent-bubble { max-width: 100%; } }
+@media (max-width: 360px) { .agent-secondary-actions { grid-template-columns: 1fr; } .agent-bubble { max-width: 100%; } }
 
 :root {
   color-scheme: dark;
