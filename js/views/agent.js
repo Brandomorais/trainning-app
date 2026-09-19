@@ -8,13 +8,18 @@ const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const prescription = (s) => `${EXERCISES[s.exerciseId]?.name ?? s.exerciseId} · ${s.sets}×${s.reps}${s.rpe ? ' @' + s.rpe : ''}${s.loadFactor && s.loadFactor < 1 ? ' · carga sugerida −' + Math.round((1 - s.loadFactor) * 100) + '%' : ''}`;
 let busy = false;
 let message = '';
+let pendingMode = null;
+// Rascunho vivo: o storage só repõe o texto ao reabrir o app, e sua leitura é
+// assíncrona demais para servir de fonte durante a digitação.
+let draftText = null;
 
 export async function render(el) {
   const [conversations, allMessages, reviews, memories, plans, auth, selected, draft] = await Promise.all([
     list('conversations'), list('messages'), list('reviews'), list('memories'), getPlans(), getLocal('auth'), getLocal('activeConversation'), getLocal('agentDraft'),
   ]);
-  const conversation = conversations.find((c) => c.id === selected) ?? conversations.sort((a, b) => b.createdAt - a.createdAt)[0];
-  const messages = allMessages.filter((m) => m.conversationId === conversation?.id).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+  const composing = pendingMode !== null;
+  const conversation = composing ? null : (conversations.find((c) => c.id === selected) ?? conversations.sort((a, b) => b.createdAt - a.createdAt)[0]);
+  const messages = conversation ? allMessages.filter((m) => m.conversationId === conversation.id).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)) : [];
   const latest = messages.at(-1);
   const waiting = latest?.role === 'user';
   const pendingReviews = reviews.filter((r) => r.status === 'proposed').sort((a, b) => b.createdAt - a.createdAt);
@@ -23,7 +28,7 @@ export async function render(el) {
   el.innerHTML = `
     <header class="page-head agent-head"><div><h1>Agente</h1><p class="muted small">Ajuste o treino com base no que aconteceu de verdade.</p></div><a class="back-link" href="#/config">Config</a></header>
     ${!auth ? '<div class="banner-info">Você pode salvar seu feedback agora. Para receber perguntas e ajustes da IA, conecte sua conta em Configurações.</div>' : ''}
-    ${!hasConversation ? `<section class="card agent-start">
+    ${!hasConversation && !composing ? `<section class="card agent-start">
       <span class="agent-kicker">PRÓXIMA SEMANA</span>
       <h2>Como devemos ajustar seu treino?</h2>
       <p class="muted">Responda algumas perguntas. Você confere a proposta antes de qualquer mudança.</p>
@@ -38,7 +43,7 @@ export async function render(el) {
     ${message ? `<p class="agent-notice" role="status">${esc(message)}</p>` : ''}
     ${!busy && latest?.role === 'assistant' && latest.options?.length ? `<div class="quick-replies">${latest.options.map((option, i) => `<button class="btn" data-answer="${i}">${esc(option)}</button>`).join('')}</div>` : ''}
     <form id="agent-form" class="agent-composer">
-      <label class="field" for="agent-text"><span>${hasConversation ? 'Sua resposta' : 'Quer contar mais alguma coisa?'}</span><textarea id="agent-text" rows="3" maxlength="4000" placeholder="${hasConversation ? 'Responda do seu jeito…' : 'Ex.: semana que vem só tenho 45 minutos por treino'}" ${busy ? 'disabled' : ''}>${esc(draft ?? '')}</textarea></label>
+      <label class="field" for="agent-text"><span>${composing ? 'Sua pergunta' : hasConversation ? 'Sua resposta' : 'Quer contar mais alguma coisa?'}</span><textarea id="agent-text" rows="3" maxlength="4000" placeholder="${composing ? 'Ex.: faz sentido trocar o supino inclinado?' : hasConversation ? 'Responda do seu jeito…' : 'Ex.: semana que vem só tenho 45 minutos por treino'}" ${busy ? 'disabled' : ''}>${esc(draftText ?? draft ?? '')}</textarea></label>
       <button class="btn btn-primary composer-send" type="submit" ${busy ? 'disabled' : ''}>${auth && navigator.onLine ? 'Enviar' : 'Salvar no aparelho'}</button>
       ${waiting && auth ? `<button class="btn" type="button" id="retry-agent" ${busy ? 'disabled' : ''}>Receber resposta do agente</button>` : ''}
       ${latest?.role === 'assistant' && latest.kind === 'summarize' ? `<p class="muted small">Confira o resumo acima. Você pode corrigir algo na conversa antes de continuar.</p><button class="btn" type="button" id="generate-proposal" ${busy || !auth ? 'disabled' : ''}>Resumo correto — gerar proposta</button>` : ''}
@@ -82,15 +87,16 @@ export async function render(el) {
       const purpose = mode ?? 'free';
       conv = await putRecord('conversations', { id: newId(), purpose, title: { weekly: 'Revisão da semana', session: 'Feedback do treino', free: 'Conversa' }[purpose], date, createdAt: Date.now() });
       await setLocal('activeConversation', conv.id);
+      pendingMode = null;
     }
     const saved = await putRecord('messages', { id: newId(), conversationId: conv.id, role: 'user', text, createdAt: Date.now() });
-    await setLocal('agentDraft', '');
+    draftText = ''; await setLocal('agentDraft', '');
     if (auth && navigator.onLine) await receive(conv.id, saved.id);
     else message = 'Resposta salva no aparelho. Conecte sua conta e toque em Receber resposta do agente.';
   };
-  el.querySelector('#agent-form').onsubmit = (event) => { event.preventDefault(); const text = el.querySelector('#agent-text').value; run(() => send(text)); };
-  el.querySelector('#agent-text').oninput = (event) => { setLocal('agentDraft', event.target.value); };
-  el.querySelector('#conversation-select')?.addEventListener('change', async (event) => { await setLocal('activeConversation', event.target.value); message = ''; await redraw(); });
+  el.querySelector('#agent-form').onsubmit = (event) => { event.preventDefault(); const text = el.querySelector('#agent-text').value; run(() => send(text, pendingMode)); };
+  el.querySelector('#agent-text').oninput = (event) => { draftText = event.target.value; setLocal('agentDraft', event.target.value); };
+  el.querySelector('#conversation-select')?.addEventListener('change', async (event) => { await setLocal('activeConversation', event.target.value); pendingMode = null; message = ''; await redraw(); });
   el.querySelector('#memory-form').onsubmit = async (event) => {
     event.preventDefault();
     const text = el.querySelector('#memory-text').value.trim(); if (!text) return;
@@ -102,16 +108,16 @@ export async function render(el) {
     if (button.dataset.start) {
       const mode = button.dataset.start;
       if (mode === 'free') {
-        const conv = await putRecord('conversations', { id: newId(), purpose: 'free', title: 'Conversa', date, createdAt: Date.now() });
-        await setLocal('activeConversation', conv.id); await redraw();
-      } else run(() => send(mode === 'weekly' ? 'Quero revisar esta semana e preparar a próxima. Faça as perguntas necessárias com base nos meus registros.' : 'Quero conversar sobre meu treino mais recente. Me ajude a registrar o contexto que está faltando.', mode));
+        // A conversa nasce no envio: abrir só prepara o campo, sem deixar rascunho vazio no banco.
+        pendingMode = 'free'; message = ''; await redraw(); el.querySelector('#agent-text').focus();
+      } else { pendingMode = null; run(() => send(mode === 'weekly' ? 'Quero revisar esta semana e preparar a próxima. Faça as perguntas necessárias com base nos meus registros.' : 'Quero conversar sobre meu treino mais recente. Me ajude a registrar o contexto que está faltando.', mode)); }
     }
     if (button.dataset.answer != null) run(() => send(latest.options[Number(button.dataset.answer)]));
     if (button.id === 'retry-agent') run(() => receive(conversation.id, latest.id));
     if (button.id === 'generate-proposal') run(async () => { await syncNow(); await api('propose', { conversationId: conversation.id, summaryId: latest.id, requestId: 'proposal:' + latest.id }); await syncNow(); });
     if (button.dataset.apply) run(async () => { await syncNow(); await api('apply', { reviewId: button.dataset.apply }); await syncNow(); message = 'Próxima semana aplicada. O treino já iniciado mantém sua prescrição.'; });
     if (button.dataset.reject) run(async () => { await api('reject', { reviewId: button.dataset.reject }); await syncNow(); message = 'Plano atual mantido.'; });
-    if (button.dataset.adjust) { await setLocal('activeConversation', button.dataset.adjust); await setLocal('agentDraft', 'Quero ajustar a proposta: '); await redraw(); el.querySelector('#agent-text').focus(); }
+    if (button.dataset.adjust) { pendingMode = null; await setLocal('activeConversation', button.dataset.adjust); draftText = 'Quero ajustar a proposta: '; await setLocal('agentDraft', 'Quero ajustar a proposta: '); await redraw(); el.querySelector('#agent-text').focus(); }
     if (button.dataset.deleteMemory) { await removeRecord('memories', button.dataset.deleteMemory); await redraw(); }
     if (button.dataset.editMemory) {
       const m = memories.find((x) => x.id === button.dataset.editMemory);

@@ -101,3 +101,20 @@ test('conversa remota, resumo, proposta e aprovação usando banco real e IA sim
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   } finally { await pg.close(); }
 });
+
+test('iniciar uma pergunta abre o campo de escrita e não cria conversas vazias', async ({ page }) => {
+  const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/#/agente');
+  await page.getByRole('button', { name:'Fazer uma pergunta' }).click();
+  await expect(page.getByRole('heading', { name:'Como devemos ajustar seu treino?' })).toBeHidden();
+  await expect(page.locator('#agent-text')).toBeFocused();
+  // Conversas só existem depois de enviar: repetir a ação não pode acumular rascunhos vazios.
+  await page.getByRole('button', { name:'Nova conversa' }).click();
+  await page.getByRole('button', { name:'Nova conversa' }).click();
+  await expect(page.getByText('Trocar de conversa')).toBeHidden();
+  await page.locator('#agent-text').fill('Faz sentido trocar o supino inclinado?');
+  await page.locator('#agent-form button[type=submit]').click();
+  await expect(page.locator('.from-user')).toContainText('supino inclinado');
+  await expect(page.getByText('Trocar de conversa')).toBeHidden();
+  expect(errors).toEqual([]);
+});
