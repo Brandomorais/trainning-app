@@ -4,7 +4,7 @@
  *
  * Incremente CACHE_VERSION sempre que publicar alterações no app.
  */
-const CACHE_VERSION = 'treino-v8-conversa-livre';
+const CACHE_VERSION = 'treino-v9-conflitos';
 
 const ASSETS = [
   './',
