@@ -6,6 +6,9 @@ export const SCHEMA_VERSION = 5;
 const APP_ID = 'treino-powerlifting';
 export const KINDS = ['logs', 'cardio', 'exerciseNotes', 'sessions', 'feedback', 'memories', 'conversations', 'messages', 'profile', 'cycle', 'settings', 'plans', 'reviews'];
 const REMOTE_ONLY = new Set(['plans', 'reviews']);
+// Entidades independentes podem coexistir quando dois aparelhos alteram o
+// mesmo id. Registros estruturais/singletons continuam exigindo uma escolha.
+export const KEEP_BOTH_KINDS = new Set(['logs', 'cardio', 'exerciseNotes', 'feedback', 'memories', 'messages']);
 let migration;
 export function newId() { return crypto.randomUUID(); }
 const row = (kind, value, revision = 0, deleted = false) => ({ kind, id: value.id, value, revision, deleted });
@@ -199,7 +202,17 @@ export async function resolveConflict(kind, id, choice) {
     const conflicts = (await req(tx.meta.get('syncConflicts'))) ?? [];
     const conflict = conflicts.find((c) => c.kind === kind && c.id === id);
     if (!conflict) return;
-    if (choice === 'remote') {
+    if (choice === 'both') {
+      if (!KEEP_BOTH_KINDS.has(kind) || conflict.deleted) throw new Error('Este tipo de alteração exige escolher uma das versões.');
+      const local = await req(tx.records.get([kind, id]));
+      if (!local || local.deleted) throw new Error('Não há duas versões ativas para preservar.');
+      const copy = { ...local.value, id: newId(), updatedAt: Date.now() };
+      const error = recordError(kind, copy); if (error) throw new Error(error);
+      tx.records.put(row(kind, copy));
+      tx.outbox.put({ kind, id: copy.id, opId: newId(), baseRevision: 0, value: copy, deleted: false });
+      tx.outbox.delete([kind, id]);
+      tx.records.put({ kind, id, value: conflict.value, deleted: false, revision: conflict.revision });
+    } else if (choice === 'remote') {
       tx.outbox.delete([kind, id]); tx.records.put({ kind, id, value: conflict.value, deleted: conflict.deleted, revision: conflict.revision });
     } else {
       const pending = await req(tx.outbox.get([kind, id]));

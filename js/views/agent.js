@@ -1,4 +1,4 @@
-import { list, getLocal, setLocal, putRecord, removeRecord, newId, getPlans } from '../db.js';
+import { list, getLocal, getRecord, setLocal, putRecord, removeRecord, newId, getPlans, resolveConflict, KEEP_BOTH_KINDS } from '../db.js';
 import { api } from '../api.js';
 import { syncNow } from '../sync.js';
 import { toISODate, formatDateShort, lastSundayISO, addDaysISO } from '../progression.js';
@@ -14,9 +14,10 @@ let pendingMode = null;
 let draftText = null;
 
 export async function render(el) {
-  const [conversations, allMessages, reviews, memories, plans, auth, selected, draft] = await Promise.all([
-    list('conversations'), list('messages'), list('reviews'), list('memories'), getPlans(), getLocal('auth'), getLocal('activeConversation'), getLocal('agentDraft'),
+  const [conversations, allMessages, reviews, memories, plans, auth, selected, draft, conflicts] = await Promise.all([
+    list('conversations'), list('messages'), list('reviews'), list('memories'), getPlans(), getLocal('auth'), getLocal('activeConversation'), getLocal('agentDraft'), getLocal('syncConflicts'),
   ]);
+  const disputed = await Promise.all((conflicts ?? []).map(async (c) => ({ ...c, local: await getRecord(c.kind, c.id) })));
   const composing = pendingMode !== null;
   const conversation = composing ? null : (conversations.find((c) => c.id === selected) ?? conversations.sort((a, b) => b.createdAt - a.createdAt)[0]);
   const messages = conversation ? allMessages.filter((m) => m.conversationId === conversation.id).sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)) : [];
@@ -28,6 +29,7 @@ export async function render(el) {
   el.innerHTML = `
     <header class="page-head agent-head"><div><h1>Agente</h1><p class="muted small">Ajuste o treino com base no que aconteceu de verdade.</p></div><a class="back-link" href="#/config">Config</a></header>
     ${!auth ? '<div class="banner-info">Você pode salvar seu feedback agora. Para receber perguntas e ajustes da IA, conecte sua conta em Configurações.</div>' : ''}
+    ${disputed.length ? `<section class="card conflict agent-conflicts"><h2>Resolver alterações entre aparelhos</h2><p class="muted small">Escolha o que deve entrar no contexto do agente. Nada será descartado sem sua decisão.</p>${disputed.map((c) => `<div class="conflict"><strong>${esc(c.kind)}</strong><details><summary>Comparar versões</summary><p class="small">Deste aparelho</p><pre>${esc(c.local ? JSON.stringify(c.local, null, 2) : 'Registro apagado neste aparelho.')}</pre><p class="small">Do servidor</p><pre>${esc(c.deleted ? 'Registro apagado no servidor.' : JSON.stringify(c.value, null, 2))}</pre></details><div class="action-row"><button class="btn" data-agent-conflict-kind="${esc(c.kind)}" data-agent-conflict-id="${esc(c.id)}" data-choice="local">Deste aparelho</button><button class="btn" data-agent-conflict-kind="${esc(c.kind)}" data-agent-conflict-id="${esc(c.id)}" data-choice="remote">Do servidor</button>${KEEP_BOTH_KINDS.has(c.kind) && c.local && !c.deleted ? `<button class="btn btn-primary" data-agent-conflict-kind="${esc(c.kind)}" data-agent-conflict-id="${esc(c.id)}" data-choice="both">Preservar as duas</button>` : ''}</div></div>`).join('')}</section>` : ''}
     ${!hasConversation && !composing ? `<section class="card agent-start">
       <span class="agent-kicker">PRÓXIMA SEMANA</span>
       <h2>Como devemos ajustar seu treino?</h2>
@@ -105,6 +107,16 @@ export async function render(el) {
   };
   el.onclick = async (event) => {
     const button = event.target.closest('button'); if (!button || busy) return;
+    if (button.dataset.agentConflictId != null) {
+      run(async () => {
+        await resolveConflict(button.dataset.agentConflictKind, button.dataset.agentConflictId, button.dataset.choice);
+        await syncNow();
+        const remaining = (await getLocal('syncConflicts')) ?? [];
+        if (!remaining.length && waiting) await receive(conversation.id, latest.id);
+        else message = remaining.length ? 'Alteração resolvida. Revise a próxima divergência.' : 'Sincronização concluída.';
+      });
+      return;
+    }
     if (button.dataset.start) {
       const mode = button.dataset.start;
       if (mode === 'free') {

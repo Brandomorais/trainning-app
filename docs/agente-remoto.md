@@ -82,7 +82,12 @@ credenciais e conteúdo das conversas não são registrados em logs técnicos.
 
 A primeira sincronização adota os registros locais. Outros aparelhos usam a
 mesma conta. IDs existentes são preservados. Em conflitos, o app oferece manter
-a versão local ou a remota. Nenhuma resposta local é sobrescrita silenciosamente.
+a versão local ou a remota diretamente na conversa e em Configurações. Para
+registros independentes (séries, aeróbico, notas, feedback, memórias e mensagens),
+também é possível preservar as duas versões; a cópia local recebe um novo id e
+volta para a fila de sincronização. Depois do último conflito, uma resposta
+pendente do agente é retomada automaticamente. Nenhuma resposta local é
+sobrescrita silenciosamente.
 
 Backups completos com planos podem ser restaurados localmente e enviados a uma
 conta remota vazia. Restaurar planos sobre uma nuvem já populada é bloqueado para
