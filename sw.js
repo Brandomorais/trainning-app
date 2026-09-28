@@ -4,7 +4,7 @@
  *
  * Incremente CACHE_VERSION sempre que publicar alterações no app.
  */
-const CACHE_VERSION = 'treino-v10-conflitos-no-agente';
+const CACHE_VERSION = 'treino-v11-conflito-vazio';
 
 const ASSETS = [
   './',

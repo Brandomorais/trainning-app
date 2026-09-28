@@ -12,6 +12,13 @@ export const KEEP_BOTH_KINDS = new Set(['logs', 'cardio', 'exerciseNotes', 'feed
 let migration;
 export function newId() { return crypto.randomUUID(); }
 const row = (kind, value, revision = 0, deleted = false) => ({ kind, id: value.id, value, revision, deleted });
+// jsonb não preserva a ordem das chaves: comparar os dois lados exige uma forma canônica.
+const canonical = (value) => Array.isArray(value) ? value.map(canonical)
+  : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map((k) => [k, canonical(value[k])]))
+  : value;
+// updatedAt registra quando se gravou, não o que se gravou. Dois aparelhos com a mesma
+// série divergem nele e em mais nada — isso não é uma decisão a tomar.
+export const sameContent = (a, b) => JSON.stringify(canonical({ ...a, updatedAt: null })) === JSON.stringify(canonical({ ...b, updatedAt: null }));
 export function ready() {
   if (!migration) migration = transact('readwrite', async (tx) => {
     if (await req(tx.meta.get('schema5'))) return;
@@ -50,7 +57,8 @@ async function write(tx, kind, value, deleted = false) {
   const old = await req(tx.records.get([kind, value.id]));
   const next = { ...value, updatedAt: Date.now() };
   tx.records.put(row(kind, next, old?.revision ?? 0, deleted));
-  tx.outbox.put({ kind, id: value.id, opId: newId(), baseRevision: old?.revision ?? 0, value: next, deleted });
+  // Regravar o mesmo conteúdo não é alteração: enfileirar isso só produziria divergência sem informação.
+  if (!old || old.deleted !== deleted || !sameContent(old.value, next)) tx.outbox.put({ kind, id: value.id, opId: newId(), baseRevision: old?.revision ?? 0, value: next, deleted });
   return next;
 }
 export async function putRecord(kind, value) {
@@ -190,10 +198,21 @@ export async function acceptSync({ acknowledgements = [], changes = [], cursor, 
       const pending = await req(tx.outbox.get(key));
       if (!pending) tx.records.put({ kind: remote.kind, id: remote.id, value: remote.value, deleted: remote.deleted, revision: remote.revision });
     }
+    const disputed = [];
+    for (const conflict of conflicts) {
+      const key = [conflict.kind, conflict.id];
+      const pending = await req(tx.outbox.get(key));
+      // Mesmo conteúdo dos dois lados: adota o servidor e segue, em vez de pedir uma escolha vazia.
+      if (pending && !pending.deleted && !conflict.deleted && sameContent(pending.value, conflict.value)) {
+        tx.outbox.delete(key);
+        tx.records.put({ kind: conflict.kind, id: conflict.id, value: conflict.value, deleted: false, revision: conflict.revision });
+      } else disputed.push(conflict);
+    }
     tx.meta.put(cursor, 'syncCursor');
     if (epoch) tx.meta.put(epoch, 'syncEpoch');
-    tx.meta.put(conflicts, 'syncConflicts');
+    tx.meta.put(disputed, 'syncConflicts');
     tx.meta.put(Date.now(), 'lastSync');
+    return disputed;
   });
 }
 export async function resolveConflict(kind, id, choice) {

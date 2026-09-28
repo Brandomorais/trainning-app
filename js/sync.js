@@ -26,8 +26,9 @@ async function synchronize() {
       const cursor = (await getLocal('syncCursor')) ?? 0;
       const result = await api('sync', { operations, cursor, epoch: (await getLocal('syncEpoch')) ?? null });
       if ((await getLocal('owner')) !== owner) throw new Error('A conta foi desconectada. A sincronização foi interrompida.');
-      await acceptSync(result);
-      if (result.conflicts.length) throw new Error('Há alterações diferentes entre aparelhos. Resolva em Configurações.');
+      // A contagem que importa é a das divergências que sobraram depois do descarte automático.
+      const disputed = await acceptSync(result);
+      if (disputed.length) throw new Error('Há alterações diferentes entre aparelhos. Resolva em Configurações.');
       if (!result.more && !(await pendingOperations()).length) {
         await setLocal('syncError', null);
         globalThis.dispatchEvent?.(new Event('sync-complete'));
