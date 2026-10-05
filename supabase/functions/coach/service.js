@@ -159,7 +159,18 @@ export async function modelResponse(schema, name, instructions, input, config, f
   });
   const result = await response.json();
   config.onUsage?.(result.usage ?? null);
-  if (!response.ok || result.status !== 'completed') throw new Error('A IA não concluiu a resposta. Seus registros foram preservados; tente novamente.');
+  if (!response.ok || result.status !== 'completed') {
+    // Não expor a mensagem bruta do provedor: ela pode conter credenciais.
+    const code = result.error?.code;
+    const reason = code === 'insufficient_quota' ? 'A API de IA está sem saldo ou cota. Confira o faturamento da API OpenAI.'
+      : response.status === 401 ? 'A chave da IA no servidor foi recusada. Atualize a configuração da API OpenAI.'
+      : code === 'model_not_found' ? 'O modelo configurado não está disponível para esta conta. Confira OPENAI_MODEL no servidor.'
+      : response.status === 429 ? 'A IA atingiu o limite temporário de uso. Aguarde antes de tentar novamente.'
+      : response.status === 400 ? 'A IA recusou a configuração do pedido. É necessário revisar a integração no servidor.'
+      : result.incomplete_details?.reason === 'max_output_tokens' ? 'A resposta da IA excedeu o limite de geração. É necessário ajustar esse limite no servidor.'
+      : 'A IA está indisponível ou não concluiu a resposta. Tente novamente mais tarde.';
+    throw new Error(reason + ' Seus registros foram preservados.');
+  }
   const contents = (result.output ?? []).flatMap((item) => item.content ?? []);
   if (contents.some((item) => item.type === 'refusal')) throw new Error('O agente não pôde atender esse pedido. Reformule a mensagem.');
   const text = contents.filter((item) => item.type === 'output_text').map((item) => item.text).join('');

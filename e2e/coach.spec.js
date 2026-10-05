@@ -58,6 +58,7 @@ test('conversa remota, resumo, proposta e aprovação usando banco real e IA sim
     }
     if (url === 'https://api.openai.com/v1/responses') {
       aiCalls++;
+      if (aiCalls === 1) return Response.json({ error: { code: 'server_error' } }, { status: 503 });
       const request = JSON.parse(options.body); const input = JSON.parse(request.input);
       const message = input.messages.at(-1);
       const answer = request.text.format.name === 'weekly_plan'
@@ -87,7 +88,10 @@ test('conversa remota, resumo, proposta e aprovação usando banco real e IA sim
     await expect(page.locator('.sync-label')).toContainText('Conta conectada');
     await page.locator('#tabs a[href="#/agente"]').click();
     await page.getByRole('button',{ name:'Revisar semana',exact:true }).click();
+    await expect(page.locator('.agent-notice')).toContainText('Tente novamente mais tarde');
+    await page.locator('#retry-agent').click();
     await expect(page.locator('.from-agent')).toContainText('Quanto tempo');
+    await expect(page.locator('.from-user')).toHaveCount(1);
     await page.getByRole('button',{ name:'45 minutos',exact:true }).click();
     await expect(page.locator('#generate-proposal')).toBeVisible();
     await page.locator('#generate-proposal').click();
@@ -97,7 +101,7 @@ test('conversa remota, resumo, proposta e aprovação usando banco real e IA sim
     const { rows } = await pg.query("select value from coach_records where kind='plans' and value->>'status'='applied'");
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.value.id !== 'program-initial-v1').value.days['barra-a'].slots[0].sets).toBe(3);
-    expect(aiCalls).toBe(3);
+    expect(aiCalls).toBe(4);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   } finally { await pg.close(); }
 });
