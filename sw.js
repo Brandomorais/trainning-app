@@ -4,7 +4,7 @@
  *
  * Incremente CACHE_VERSION sempre que publicar alterações no app.
  */
-const CACHE_VERSION = 'treino-v11-conflito-vazio';
+const CACHE_VERSION = 'treino-v12-conflitos-em-lote';
 
 const ASSETS = [
   './',
@@ -13,6 +13,7 @@ const ASSETS = [
   './css/style.css',
   './js/app.js',
   './js/db.js',
+  './js/views/conflict-selection.js',
   './js/storage.js',
   './js/plans.js',
   './js/records.js',

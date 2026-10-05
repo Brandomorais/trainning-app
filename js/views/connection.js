@@ -1,4 +1,5 @@
-import { getLocal, getRecord, setLocal, putRecord, pendingOperations, resolveConflict, wipeAll, KEEP_BOTH_KINDS } from '../db.js';
+import { conflictSelectionHTML, selectedConflicts, handleConflictSelection } from './conflict-selection.js';
+import { getLocal, getRecord, setLocal, putRecord, pendingOperations, resolveConflict, resolveConflicts, wipeAll, KEEP_BOTH_KINDS } from '../db.js';
 import { configureConnection, signIn, signOut, api } from '../api.js';
 import { syncNow } from '../sync.js';
 const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -17,7 +18,7 @@ export async function connectionHTML() {
     <div id="connection-status" role="status"></div>
     ${auth ? '<div class="action-row"><button class="btn btn-primary" id="sync-now">Sincronizar agora</button><button class="btn" id="sign-out">Sair da conta</button></div>' : `<details ${!config ? 'open' : ''}><summary>Configurar conexão</summary><label class="field"><span>URL do projeto Supabase</span><input id="remote-url" type="url" value="${esc(config?.url)}" placeholder="https://seu-projeto.supabase.co"></label><label class="field"><span>Chave pública (publishable ou anon)</span><input id="remote-public-key" value="${esc(config?.publicKey)}" autocomplete="off"></label><button class="btn" id="save-connection">Salvar conexão</button></details>
       <label class="field"><span>E-mail da conta</span><input id="account-email" type="email" autocomplete="username"></label><label class="field"><span>Senha</span><input id="account-password" type="password" autocomplete="current-password"></label><button class="btn btn-primary" id="sign-in">Entrar e sincronizar</button>`}
-    ${disputed.map((c) => `<div class="conflict"><strong>Alteração em ${esc(c.kind)}</strong><p class="small">Existe outra versão deste registro no servidor.</p><details><summary>Comparar as duas versões</summary><p class="small">Deste aparelho</p><pre>${esc(c.local ? JSON.stringify(c.local, null, 2) : 'Registro apagado neste aparelho.')}</pre><p class="small">Do servidor</p><pre>${esc(c.deleted ? 'Registro apagado no servidor.' : JSON.stringify(c.value, null, 2))}</pre></details><div class="action-row"><button class="btn" data-conflict-kind="${esc(c.kind)}" data-conflict-id="${esc(c.id)}" data-choice="local">Manter deste aparelho</button><button class="btn" data-conflict-kind="${esc(c.kind)}" data-conflict-id="${esc(c.id)}" data-choice="remote">Usar do servidor</button>${KEEP_BOTH_KINDS.has(c.kind) && c.local && !c.deleted ? `<button class="btn btn-primary" data-conflict-kind="${esc(c.kind)}" data-conflict-id="${esc(c.id)}" data-choice="both">Preservar as duas</button>` : ''}</div></div>`).join('')}
+    ${disputed.length ? conflictSelectionHTML() : ''}${disputed.map((c) => `<div class="conflict"><label class="setting-check"><input type="checkbox" data-conflict-select data-kind="${esc(c.kind)}" data-id="${esc(c.id)}">Selecionar este conflito</label><strong>Alteração em ${esc(c.kind)}</strong><p class="small">Existe outra versão deste registro no servidor.</p><details><summary>Comparar as duas versões</summary><p class="small">Deste aparelho</p><pre>${esc(c.local ? JSON.stringify(c.local, null, 2) : 'Registro apagado neste aparelho.')}</pre><p class="small">Do servidor</p><pre>${esc(c.deleted ? 'Registro apagado no servidor.' : JSON.stringify(c.value, null, 2))}</pre></details><div class="action-row"><button class="btn" data-conflict-kind="${esc(c.kind)}" data-conflict-id="${esc(c.id)}" data-choice="local">Manter deste aparelho</button><button class="btn" data-conflict-kind="${esc(c.kind)}" data-conflict-id="${esc(c.id)}" data-choice="remote">Usar do servidor</button>${KEEP_BOTH_KINDS.has(c.kind) && c.local && !c.deleted ? `<button class="btn btn-primary" data-conflict-kind="${esc(c.kind)}" data-conflict-id="${esc(c.id)}" data-choice="both">Preservar as duas</button>` : ''}</div></div>`).join('')}
   </section>
   <section class="card"><h2>Seu contexto</h2>
     <label class="field"><span>Objetivo e equipamentos disponíveis</span><textarea id="profile-context" rows="3" maxlength="2000">${esc(profile?.context)}</textarea></label>
@@ -31,8 +32,11 @@ export async function connectionHTML() {
   </section>`;
 }
 export async function handleConnectionClick(event, el, redraw) {
+  if (handleConflictSelection(event, el)) return true;
   const button = event.target.closest('button');
-  if (!button || !['save-connection', 'sign-in', 'sign-out', 'sync-now', 'save-profile', 'erase-remote'].includes(button.id) && button.dataset.conflictId == null) return false;
+  if (!button || !['save-connection', 'sign-in', 'sign-out', 'sync-now', 'save-profile', 'erase-remote'].includes(button.id) && button.dataset.conflictId == null && button.dataset.resolveSelected == null) return false;
+  const selected = selectedConflicts(el);
+  if (button.dataset.resolveSelected != null && !selected.length) return true;
   button.disabled = true;
   try {
     if (button.id === 'save-connection') { await configureConnection(el.querySelector('#remote-url').value.trim(), el.querySelector('#remote-public-key').value.trim()); }
@@ -50,6 +54,10 @@ export async function handleConnectionClick(event, el, redraw) {
       const scheduleHour = Number(el.querySelector('#schedule-hour').value);
       if (!Number.isInteger(durationMinutes) || durationMinutes < 15 || durationMinutes > 180 || !Number.isInteger(scheduleHour) || scheduleHour < 0 || scheduleHour > 23) throw new Error('Confira a duração e o horário.');
       await putRecord('profile', { id: 'main', context: el.querySelector('#profile-context').value.trim(), availability: el.querySelector('#profile-days').value.trim(), durationMinutes, scheduleEnabled: el.querySelector('#schedule-enabled').checked, scheduleDay, scheduleHour, timezone: 'America/Sao_Paulo' });
+    }
+    if (button.dataset.resolveSelected != null) {
+      await resolveConflicts(selected, 'local');
+      await syncNow();
     }
     if (button.dataset.conflictId != null) {
       // Endereçar por kind+id: a sincronização de fundo reescreve a lista e um índice apontaria para outro registro.

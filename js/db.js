@@ -216,27 +216,33 @@ export async function acceptSync({ acknowledgements = [], changes = [], cursor, 
   });
 }
 export async function resolveConflict(kind, id, choice) {
+  return resolveConflicts([{ kind, id }], choice);
+}
+export async function resolveConflicts(selected, choice) {
+  if (!['local', 'remote', 'both'].includes(choice)) throw new Error('Escolha inválida.');
   await ready();
   return transact('readwrite', async (tx) => {
     const conflicts = (await req(tx.meta.get('syncConflicts'))) ?? [];
-    const conflict = conflicts.find((c) => c.kind === kind && c.id === id);
-    if (!conflict) return;
-    if (choice === 'both') {
-      if (!KEEP_BOTH_KINDS.has(kind) || conflict.deleted) throw new Error('Este tipo de alteração exige escolher uma das versões.');
-      const local = await req(tx.records.get([kind, id]));
-      if (!local || local.deleted) throw new Error('Não há duas versões ativas para preservar.');
-      const copy = { ...local.value, id: newId(), updatedAt: Date.now() };
-      const error = recordError(kind, copy); if (error) throw new Error(error);
-      tx.records.put(row(kind, copy));
-      tx.outbox.put({ kind, id: copy.id, opId: newId(), baseRevision: 0, value: copy, deleted: false });
-      tx.outbox.delete([kind, id]);
-      tx.records.put({ kind, id, value: conflict.value, deleted: false, revision: conflict.revision });
-    } else if (choice === 'remote') {
-      tx.outbox.delete([kind, id]); tx.records.put({ kind, id, value: conflict.value, deleted: conflict.deleted, revision: conflict.revision });
-    } else {
-      const pending = await req(tx.outbox.get([kind, id]));
-      if (pending) tx.outbox.put({ ...pending, opId: newId(), baseRevision: conflict.revision });
+    const keys = new Set(selected.map(({ kind, id }) => JSON.stringify([kind, id])));
+    for (const conflict of conflicts.filter((c) => keys.has(JSON.stringify([c.kind, c.id])))) {
+      const { kind, id } = conflict;
+      if (choice === 'both') {
+        if (!KEEP_BOTH_KINDS.has(kind) || conflict.deleted) throw new Error('Este tipo de alteração exige escolher uma das versões.');
+        const local = await req(tx.records.get([kind, id]));
+        if (!local || local.deleted) throw new Error('Não há duas versões ativas para preservar.');
+        const copy = { ...local.value, id: newId(), updatedAt: Date.now() };
+        const error = recordError(kind, copy); if (error) throw new Error(error);
+        tx.records.put(row(kind, copy));
+        tx.outbox.put({ kind, id: copy.id, opId: newId(), baseRevision: 0, value: copy, deleted: false });
+        tx.outbox.delete([kind, id]);
+        tx.records.put({ kind, id, value: conflict.value, deleted: false, revision: conflict.revision });
+      } else if (choice === 'remote') {
+        tx.outbox.delete([kind, id]); tx.records.put({ kind, id, value: conflict.value, deleted: conflict.deleted, revision: conflict.revision });
+      } else {
+        const pending = await req(tx.outbox.get([kind, id]));
+        if (pending) tx.outbox.put({ ...pending, opId: newId(), baseRevision: conflict.revision });
+      }
     }
-    tx.meta.put(conflicts.filter((c) => !(c.kind === kind && c.id === id)), 'syncConflicts');
+    tx.meta.put(conflicts.filter((c) => !keys.has(JSON.stringify([c.kind, c.id]))), 'syncConflicts');
   });
 }

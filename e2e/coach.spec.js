@@ -118,3 +118,40 @@ test('iniciar uma pergunta abre o campo de escrita e não cria conversas vazias'
   await expect(page.getByText('Trocar de conversa')).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+for (const route of ['config', 'agente']) {
+  test(`seleção de conflitos em lote em ${route} preserva registros não selecionados`, async ({ page }) => {
+    await page.goto('/#/treinos');
+    await page.evaluate(async () => {
+      const db = await import('/js/db.js');
+      const conflicts = [];
+      for (let i = 0; i < 3; i++) {
+        const value = { id: `batch-${i}`, date: '2026-10-05', dayKey: 'barra-a', exerciseId: 'agacho', setNumber: i + 1, weight: 90, reps: 4, rpe: 8, createdAt: 1, isDeload: false };
+        await db.putRecord('logs', value);
+        conflicts.push({ kind: 'logs', id: value.id, value: { ...value, weight: 100 }, deleted: false, revision: 7 });
+      }
+      await db.setLocal('syncConflicts', conflicts);
+    });
+    await page.goto(`/#/${route}`);
+    const action = page.locator('[data-resolve-selected]');
+    await expect(action).toBeDisabled();
+    await page.getByRole('button', { name: 'Selecionar todos', exact: true }).click();
+    await expect(action).toContainText('(3)');
+    await page.getByRole('button', { name: 'Desmarcar todos', exact: true }).click();
+    await expect(action).toBeDisabled();
+    await page.getByRole('button', { name: 'Selecionar todos', exact: true }).click();
+    await page.locator('[data-conflict-select]').last().uncheck();
+    await expect(action).toContainText('(2)');
+    await action.click();
+    await expect(page.locator('[data-conflict-select]')).toHaveCount(1);
+    const state = await page.evaluate(async () => {
+      const db = await import('/js/db.js');
+      return { conflicts: await db.getLocal('syncConflicts'), pending: await db.pendingOperations(), logs: await db.getLogs() };
+    });
+    expect(state.conflicts.map((c) => c.id)).toEqual(['batch-2']);
+    expect(state.logs.every((x) => x.weight === 90)).toBe(true);
+    expect(state.pending.find((x) => x.id === 'batch-0').baseRevision).toBe(7);
+    expect(state.pending.find((x) => x.id === 'batch-1').baseRevision).toBe(7);
+    expect(state.pending.find((x) => x.id === 'batch-2').baseRevision).toBe(0);
+  });
+}
